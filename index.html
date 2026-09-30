@@ -291,8 +291,14 @@ main{padding:56px 16px 120px}
 
 /* modal + drawer */
 .ov{position:fixed;inset:0;background:var(--overlay);z-index:50;display:flex;justify-content:center;align-items:flex-start;padding:max(48px,env(safe-area-inset-top,0px)) 16px 48px;overflow-y:auto}
-.ov.enter{animation:fade .15s}
+.ov.enter{animation:fade .16s ease-out}
+.ov.leave{animation:fadeOut .17s ease-in forwards;pointer-events:none}
+.ov.enter .dlg,.ov.swap .dlg{animation:dlgIn .22s ease-out}
+.ov.leave .dlg{animation:dlgOut .17s ease-in forwards}
 @keyframes fade{from{opacity:0}}
+@keyframes fadeOut{to{opacity:0}}
+@keyframes dlgIn{from{opacity:0;transform:translateY(10px) scale(.98)}}
+@keyframes dlgOut{to{opacity:0;transform:translateY(6px) scale(.99)}}
 .dlg{background:var(--white);border-radius:20px;box-shadow:var(--shadow-pop);width:100%;max-width:560px;padding:32px;display:flex;flex-direction:column;gap:20px;position:relative}
 .dlg h2{font-size:26px;font-weight:900;line-height:1.2}
 .x{width:36px;height:36px;border-radius:50%;background:var(--chip-grey);color:var(--muted);display:grid;place-items:center;flex:none}
@@ -321,7 +327,9 @@ main{padding:56px 16px 120px}
 .pdf-row span{font-size:12px;color:var(--muted)}
 .drawer-ov{justify-content:flex-end;padding:0;align-items:stretch}
 .drawer{background:var(--white);width:100%;max-width:480px;min-height:100%;padding:32px;display:flex;flex-direction:column;gap:20px;box-shadow:var(--shadow-pop)}
-.ov.enter .drawer{animation:slide .2s ease-out}
+.ov.enter .drawer,.ov.swap .drawer{animation:slide .22s ease-out}
+.ov.leave .drawer{animation:slideOut .17s ease-in forwards}
+@keyframes slideOut{to{transform:translateX(40px);opacity:0}}
 @keyframes slide{from{transform:translateX(40px);opacity:.5}}
 .drawer h2{font-size:24px;font-weight:900}
 .kv{display:flex;flex-direction:column}
@@ -559,7 +567,7 @@ const S = {
   gensLeft:3, simErr:false,
   gen:null, tracks:[], earlier:[], trackCount:0,
   user:null, plan:0, pending:null, paying:null,
-  modal:null, modalTrack:null, doneFmt:'MP3',
+  modal:null, modalTrack:null, stack:[], doneFmt:'MP3',
   fmt:{}, lastPlayed:null, gateEmail:'', gateErr:''
 };
 const hasPlan = () => !!(S.user && S.user.plan);
@@ -927,6 +935,7 @@ function modalHTML() {
       : [['Status', 'Preview only — no license yet'], ['Track', `${t.title} · Version ${t.ver} · ${t.trackId}`], ['License issued', 'When you download this version']];
     return `
     <div class="ov drawer-ov" data-action="ov"><aside class="drawer" role="dialog" aria-modal="true" aria-labelledby="lic-h">
+      ${S.stack.length ? `<button class="btn btn-ghost btn-sm back" data-action="back">${ic('left',16)}Go back</button>` : ''}
       <div class="dlg-top"><h2 id="lic-h">License details</h2><button class="x" data-action="close" aria-label="Close">${ic('x',18)}</button></div>
       ${selTrack(t)}<span>${badge(t)}</span>
       <div class="kv">${rows.map(([k,v]) => `<div><span>${k}</span><b>${esc(v)}</b></div>`).join('')}</div>
@@ -955,7 +964,7 @@ function modalHTML() {
         <div class="verify"><div class="qr" aria-label="Verification QR code">${q}</div><div><b>Verify this certificate</b><span>Scan the code or open pdfguru.com/verify/${t.lic.id}. Share it with a client or a platform to dispute a copyright claim.</span></div></div>
         <p class="fine">This license lets you use the track as described above. It does not transfer copyright ownership. Full terms: pdfguru.com/music-license</p>
       </div>
-      <div class="row"><button class="btn btn-pri btn-md" data-action="toast" data-msg="${esc(t.title)} license.pdf — download is simulated in the prototype">${ic('download',18)}Download PDF</button><button class="btn btn-sec btn-md" data-action="close">Close</button></div>
+      <div class="row"><button class="btn btn-pri btn-md" data-action="toast" data-msg="${esc(t.title)} license.pdf — download is simulated in the prototype">${ic('download',18)}Download PDF</button><button class="btn btn-sec btn-md" data-action="back">${ic('left',18)}Go back</button></div>
     </div></div>`;
   }
   return '';
@@ -981,23 +990,48 @@ function render() {
   renderModal();
   renderPbar();
 }
-let shownModal = null; // which window is on screen, so updates inside it don't replay the opening animation
+/* Windows: "enter" fades the overlay in on first open, "swap" keeps the overlay and only brings in the
+   next window, "leave" fades everything out before removing it. Redrawing the same window animates nothing. */
+let shownModal = null, leaveTimer = null;
 function renderModal() {
-  const root = document.getElementById('modal-root'), had = !!root.innerHTML;
-  const key = S.modal ? S.modal + ':' + S.modalTrack : null, fresh = key !== shownModal;
+  const root = document.getElementById('modal-root');
+  if (!S.modal) {
+    S.stack = [];
+    if (!shownModal) return;
+    shownModal = null;
+    const ov = root.querySelector('.ov');
+    if (ov) { ov.classList.remove('enter', 'swap'); ov.classList.add('leave'); }
+    clearTimeout(leaveTimer);
+    leaveTimer = setTimeout(() => { root.innerHTML = ''; leaveTimer = null; document.body.style.overflow = ''; }, 170);
+    if (lastFocus && document.contains(lastFocus)) lastFocus.focus();
+    return;
+  }
+  if (leaveTimer) { clearTimeout(leaveTimer); leaveTimer = null; root.innerHTML = ''; }
+  const had = !!shownModal, key = S.modal + ':' + S.modalTrack, fresh = key !== shownModal;
+  const a = document.activeElement;
   // keep focus and scroll position when the same window is redrawn
-  const a = document.activeElement, keepFocus = !fresh && root.contains(a) && a.dataset && a.dataset.action
+  const keepFocus = !fresh && root.contains(a) && a.dataset && a.dataset.action
     ? `[data-action="${a.dataset.action}"]${a.dataset.v ? `[data-v="${a.dataset.v}"]` : ''}` : null;
   const oldOv = root.querySelector('.ov'), scroll = oldOv ? oldOv.scrollTop : 0;
-  root.innerHTML = S.modal ? modalHTML() : '';
+  if (!had) lastFocus = a;
+  root.innerHTML = modalHTML();
   shownModal = key;
-  document.body.style.overflow = S.modal ? 'hidden' : '';
+  document.body.style.overflow = 'hidden';
   const ov = root.querySelector('.ov');
-  if (ov) { if (fresh) ov.classList.add('enter'); else ov.scrollTop = scroll; }
+  if (fresh) ov.classList.add(had ? 'swap' : 'enter'); else ov.scrollTop = scroll;
   if (keepFocus) { const f = root.querySelector(keepFocus); f && f.focus(); }
-  if (S.modal && fresh) { if (!had) lastFocus = document.activeElement; const f = root.querySelector('input, [data-action="close"]'); f && f.focus(); }
-  if (!S.modal && had && lastFocus && document.contains(lastFocus)) lastFocus.focus();
+  if (fresh) { const f = root.querySelector('input, [data-action="back"], [data-action="close"]'); f && f.focus({preventScroll:true}); }
   const form = document.getElementById('gate-form'); if (form) form.addEventListener('submit', onGate);
+}
+function openModal(m, id) {
+  if (S.modal && S.modal !== m) S.stack.push({m: S.modal, t: S.modalTrack});
+  S.modal = m; S.modalTrack = id; renderModal();
+}
+function goBack() {
+  const p = S.stack.pop();
+  if (p) { S.modal = p.m; S.modalTrack = p.t; } else S.modal = null;
+  renderModal();
+  if (!S.modal && S.view === 'result') renderPlayState();
 }
 function renderPbar() {
   const root = document.getElementById('pbar-root');
@@ -1104,7 +1138,7 @@ function sample() {
 }
 function jump(v) {
   Player.stop(); clearInterval(genTimer);
-  S.modal = null; S.edit = false; S.baseline = null; S.blocked = false; S.emptyErr = false; S.paying = null;
+  S.modal = null; S.stack = []; S.edit = false; S.baseline = null; S.blocked = false; S.emptyErr = false; S.paying = null;
   const P0 = 'Calm lo-fi background for a skincare Reel, warm and minimal';
   switch (v) {
     case 'empty': S.form = blankForm(); S.more = false; S.view = 'create'; S.tracks = []; S.earlier = []; if (S.gensLeft <= 0) S.gensLeft = 3; break;
@@ -1122,7 +1156,7 @@ function jump(v) {
     case 'done': case 'license': case 'cert': {
       sample(); S.user = S.user || {email:'you@company.com', plan:null}; if (!S.user.plan) S.user.plan = PLANS[1].name;
       const t = S.tracks[0]; if (!t.lic) t.lic = { id: `PG-M-${rid()}-${rid()}`, issued: today(), issuedLong: todayLong(), plan: S.user.plan, email: S.user.email };
-      S.view = 'result'; S.modal = v; S.modalTrack = t.id; S.doneFmt = 'MP3'; document.getElementById('p-sub').checked = true; break; }
+      S.view = 'result'; S.modal = v; S.modalTrack = t.id; S.doneFmt = 'MP3'; if (v === 'cert') S.stack = [{m:'done', t:t.id}]; document.getElementById('p-sub').checked = true; break; }
   }
   render(); window.scrollTo(0, 0);
 }
@@ -1160,8 +1194,9 @@ document.addEventListener('click', e => {
     case 'play': { const t = findTrack(id); if (!t) break; if (t.playing) Player.pause(); else Player.play(t); break; }
     case 'seek': { const t = findTrack(id); const r = el.getBoundingClientRect(); Player.seek(t, (e.clientX - r.left) / r.width); break; }
     case 'download': startDownload(id); break;
-    case 'license': S.modal = 'license'; S.modalTrack = id; renderModal(); break;
-    case 'cert': S.modal = 'cert'; S.modalTrack = id; renderModal(); break;
+    case 'license': openModal('license', id); break;
+    case 'cert': openModal('cert', id); break;
+    case 'back': goBack(); break;
     case 'close': S.modal = null; renderModal(); if (S.view === 'result') renderPlayState(); break;
     case 'done-fmt': S.doneFmt = v; S.fmt[S.modalTrack] = v; renderModal(); break;
     case 'confirm-download': { const t = findTrack(id); S.fmt[id] = S.doneFmt; S.modal = null; renderModal(); render(); toast(`Downloading “${t.title}.${S.doneFmt.toLowerCase()}” — simulated in the prototype`); break; }
@@ -1194,7 +1229,7 @@ document.addEventListener('change', e => {
   }
 });
 document.addEventListener('keydown', e => {
-  if (e.key === 'Escape' && S.modal) { S.modal = null; renderModal(); }
+  if (e.key === 'Escape' && S.modal) { if (S.stack.length) goBack(); else { S.modal = null; renderModal(); } }
   if (e.target.classList && e.target.classList.contains('wf') && (e.key === 'ArrowRight' || e.key === 'ArrowLeft')) {
     const t = findTrack(e.target.dataset.id); e.preventDefault(); Player.seek(t, (t.pos + (e.key === 'ArrowRight' ? 5 : -5)) / t.dur);
   }
