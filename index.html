@@ -129,6 +129,11 @@ main{padding:56px 16px 120px}
 .stepper{display:inline-flex;align-items:center;gap:10px;border:1px solid var(--line);background:var(--white);border-radius:999px;padding:3px 4px}
 .stepper button{width:28px;height:28px;border-radius:50%;background:var(--sel);color:var(--pri);display:grid;place-items:center}
 .stepper b{font-variant-numeric:tabular-nums;min-width:36px;text-align:center;font-size:14px}
+.len-row{display:flex;align-items:center;gap:8px;flex-wrap:wrap}
+.len-presets{display:flex;gap:8px;flex-wrap:wrap}
+.len-exact{display:flex;align-items:center;gap:8px}
+.len-exact-l{font-size:13px;color:var(--faint)}
+.m-only{display:none}
 .types{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:12px}
 .type{border:1px solid var(--line);border-radius:12px;padding:14px;text-align:left;display:flex;flex-direction:column;gap:2px;background:var(--white)}
 .type b{font-size:14px}
@@ -423,6 +428,17 @@ body.has-pbar .proto{bottom:calc(160px + env(safe-area-inset-bottom,0px))}
   .cert-lists{grid-template-columns:1fr}
   .kv div{grid-template-columns:110px minmax(0,1fr)}
   .wm{display:none}
+  .len .label{flex-direction:column;align-items:flex-start;gap:2px}
+  .len-row{flex-direction:column;align-items:stretch;gap:10px}
+  .len-presets{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:8px}
+  .len-presets .chip{justify-content:center;border-radius:12px;padding:11px 0;font-size:14px}
+  .len-exact{justify-content:space-between;background:var(--white);border:1px solid var(--line);border-radius:12px;padding:6px 6px 6px 14px}
+  .len-exact-l{font-size:14px;font-weight:600;color:var(--ink)}
+  .d-only{display:none}
+  .m-only{display:inline}
+  .len .stepper{border:0;padding:0;gap:12px}
+  .len .stepper button{width:36px;height:36px}
+  .len .stepper b{font-size:15px;min-width:44px}
   .voc-row{flex-direction:column;align-items:stretch;gap:16px}
   .voc-lyrics{width:100%;padding:12px;font-size:15px}
   .voice{margin:0;flex-direction:column;align-items:stretch;gap:8px}
@@ -690,12 +706,12 @@ function createView() {
   const more = S.more ? `
     <hr class="divider">
     <div class="more" id="more-panel">
-      <div class="group">
+      <div class="group len">
         <div class="label"><b id="len-l">Length</b><span class="${chg.includes('dur') ? 'chg' : ''}">${chg.includes('dur') ? 'Changed from ' + lenLabel(S.baseline.dur) : 'Reels and TikTok ads work best at 15 s'}</span></div>
-        <div class="row" role="group" aria-labelledby="len-l">
-          ${PRESETS.map(s => `<button class="chip" aria-pressed="${f.dur === s}" data-action="dur" data-v="${s}">${lenLabel(s)}</button>`).join('')}
-          <span class="hint" style="font-size:13px">or exact</span>
-          <span class="stepper"><button aria-label="5 seconds shorter" data-action="step" data-v="-5">${ic('minus',14)}</button><b aria-live="polite">${fmtT(f.dur)}</b><button aria-label="5 seconds longer" data-action="step" data-v="5">${ic('plus',14)}</button></span>
+        <div class="len-row" role="group" aria-labelledby="len-l">
+          <div class="len-presets">${PRESETS.map(s => `<button class="chip" aria-pressed="${f.dur === s}" data-action="dur" data-v="${s}">${lenLabel(s)}</button>`).join('')}</div>
+          <div class="len-exact"><span class="len-exact-l"><span class="d-only">or exact</span><span class="m-only">Exact length</span></span>
+            <span class="stepper"><button aria-label="5 seconds shorter" data-action="step" data-v="-5">${ic('minus',14)}</button><b aria-live="polite">${fmtT(f.dur)}</b><button aria-label="5 seconds longer" data-action="step" data-v="5">${ic('plus',14)}</button></span></div>
         </div>
       </div>
       <div class="group"><div class="label"><b id="type-l">Type</b></div>
