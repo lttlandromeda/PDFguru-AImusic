@@ -1,0 +1,1184 @@
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="robots" content="noindex, nofollow">
+<title>PDFGuru AI Music Prototype</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Nunito+Sans:wght@400;600;700;800;900&display=swap">
+<style>
+/* Layout: PDFGuru app shell — white header, lavender workspace with one centered 812px column; paywall uses the live grey two-column layout.
+   Single light theme on purpose: this is a prototype of PDFGuru's existing light product UI. */
+:root{
+  color-scheme:light;
+  --bg:#F7F5FB; --pg:#F6F6F6; --white:#FFFFFF;
+  --ink:#241E35; --dark:#1D1D1D; --muted:#6F6788; --faint:#9C93B4; --grey-t:#8A8A8A;
+  --line:#ECE7F4; --line2:#DADADA; --field:#FBFAFE;
+  --pri:#5F30E2; --pri-h:#4E22CC; --vio:#7C3AED; --tint:#EEE7FC; --sel:#F5F0FE; --wave:#DCD3F5;
+  --green:#0E7A55; --green-bg:#E4F6EE; --mint:#E3F5EE;
+  --red:#C81E45; --red-bg:#FDEEF1; --amber:#8A5300; --amber-bg:#FFF4DC;
+  --chip-grey:#F1EFF5; --pink:#D63FB0; --pop:#FAD9A5; --lav:#E9E4F5;
+  --overlay:rgba(36,30,53,.45);
+  --font:"Nunito Sans",ui-sans-serif,system-ui,-apple-system,"Segoe UI",Roboto,Arial,sans-serif;
+  --shadow-card:0 8px 30px rgba(124,58,237,.06);
+  --shadow-pop:0 24px 64px rgba(36,30,53,.22);
+}
+*{box-sizing:border-box}
+[hidden]{display:none!important}
+/* minimal scrollbar from the Figma example: a 7px rounded bar, inset 7px from the edge, no arrows, no corner grip */
+/* 7px transparent border on both sides + radius 10.5/3.5 leaves a 7px bar with a full semicircle at each end */
+::-webkit-scrollbar{width:21px;height:21px}
+::-webkit-scrollbar-track{background:transparent;margin:7px 0}
+::-webkit-scrollbar-track:horizontal{margin:0 7px}
+::-webkit-scrollbar-thumb{background:var(--wave);background-clip:padding-box;border:0 solid transparent;border-left-width:7px;border-right-width:7px;border-radius:10.5px / 3.5px;min-height:40px}
+::-webkit-scrollbar-thumb:horizontal{border-width:7px 0;border-radius:3.5px / 10.5px;min-width:40px}
+::-webkit-scrollbar-thumb:hover{background-color:var(--faint)}
+/* no scrollbar for the main page scroll (the page still scrolls) */
+html{scrollbar-width:none}
+html::-webkit-scrollbar,body::-webkit-scrollbar{display:none;width:0;height:0}
+::-webkit-scrollbar-button{display:none;width:0;height:0}
+::-webkit-scrollbar-corner,::-webkit-resizer{background:transparent}
+@supports (-moz-appearance:none){*{scrollbar-width:thin;scrollbar-color:var(--wave) transparent}}
+html,body{background:var(--bg);color:var(--ink)}
+body{font-family:var(--font);font-size:15px;line-height:1.4;-webkit-font-smoothing:antialiased}
+body.grey{background:var(--pg)}
+button{font:inherit;color:inherit;background:none;border:0;padding:0;cursor:pointer}
+button:disabled{cursor:not-allowed}
+input,textarea,select{font:inherit;color:inherit}
+:focus-visible{outline:2px solid var(--vio);outline-offset:2px}
+h1,h2,h3{margin:0;text-wrap:balance}
+p{margin:0}
+.svg{display:inline-block;flex:none;vertical-align:middle}
+
+/* header */
+.hdr{background:var(--white);position:sticky;top:env(safe-area-inset-top,0px);z-index:20}
+.hdr-in{max-width:1140px;margin:0 auto;padding:0 16px;height:80px;display:flex;align-items:center;gap:56px}
+.hdr nav{display:flex;align-items:center;gap:32px;font-size:18px}
+.hdr .tools{display:flex;align-items:center;gap:6px;font-weight:700;color:var(--dark)}
+.hdr .sp{flex:1}
+.btn-login{border:1px solid var(--dark);border-radius:12px;padding:11px 20px;font-weight:700;font-size:18px;color:var(--dark)}
+.avatar{display:flex;align-items:center;gap:8px}
+.avatar i{width:40px;height:40px;border-radius:50%;background:var(--tint);color:var(--pri);display:grid;place-items:center;font-style:normal;font-weight:800}
+.burger{display:none}
+.steps-top{display:none;align-items:center;gap:16px;font-size:18px;color:var(--grey-t)}
+.steps-top .st{display:flex;align-items:center;gap:14px;white-space:nowrap}
+.steps-top .st i{width:28px;height:28px;border-radius:50%;display:grid;place-items:center;font-style:normal;font-size:15px;background:#EDEDED;color:var(--grey-t)}
+.steps-top .st.done{color:#4A4A4A} .steps-top .st.done i{background:#2B2B2B;color:#fff}
+.steps-top .st.now{color:var(--pri)} .steps-top .st.now i{background:var(--pri);color:#fff;font-weight:700}
+.steps-top button.st:hover span{text-decoration:underline}
+.steps-top hr{width:36px;height:1.5px;border:0;background:#BDBDBD;margin:0}
+body.co-mode .hdr{background:transparent;position:static}
+body.co-mode .hdr-in{max-width:1402px}
+body.co-mode .hdr nav:not(.steps-top),body.co-mode #acct,body.co-mode .burger{display:none}
+body.co-mode .steps-top{display:flex}
+.pw-foot{text-align:center;font-size:15px;line-height:24px;color:var(--grey-t)}
+.pw-foot u,.legal u{cursor:pointer}
+
+/* layout */
+main{padding:56px 16px 120px}
+.col{max-width:812px;margin:0 auto;display:flex;flex-direction:column;gap:20px}
+.center{align-items:center;text-align:center}
+.eyebrow{display:inline-block;background:var(--tint);color:var(--vio);font-size:12px;font-weight:700;border-radius:999px;padding:4px 12px}
+.hero{display:flex;flex-direction:column;align-items:center;gap:14px;text-align:center}
+.hero h1{font-size:44px;font-weight:900;line-height:1.18;max-width:760px}
+.hero p{font-size:16px;color:var(--muted);max-width:560px}
+.deco{display:flex;gap:3px;align-items:center;height:36px}
+.deco i{width:3px;border-radius:2px;background:#E4DDF7}
+.page-title{font-size:32px;font-weight:900}
+.sub{color:var(--muted);font-size:15px}
+
+/* card */
+.card{background:var(--white);border:1px solid var(--line);border-radius:16px;padding:20px;box-shadow:var(--shadow-card);display:flex;flex-direction:column;gap:16px;text-align:left}
+.card.plain{box-shadow:none}
+.card.focus{border-color:var(--vio);box-shadow:0 0 0 1px var(--vio),var(--shadow-card)}
+
+/* buttons */
+.btn{display:inline-flex;align-items:center;justify-content:center;gap:8px;border-radius:8px;font-weight:700;white-space:nowrap;transition:background .15s,opacity .15s}
+.btn-md{padding:12px 20px;font-size:16px}
+.btn-sm{padding:6px 10px;font-size:13px;gap:6px}
+.btn-lg{padding:16px 32px;font-size:18px;border-radius:12px}
+.btn-pri{background:var(--pri);color:#fff}
+.btn-pri:hover:not(:disabled){background:var(--pri-h)}
+.btn-sec{background:var(--white);border:1px solid var(--line);color:var(--ink)}
+.btn-sec:hover{border-color:var(--wave)}
+.btn-tint{background:rgba(95,48,226,.12);color:var(--pri)}
+.btn-ghost{color:var(--pri);padding-left:0;padding-right:0}
+.btn:disabled{opacity:.4}
+.btn-block{width:100%}
+
+/* create */
+.field{width:100%;min-height:112px;max-height:240px;resize:none;field-sizing:content;overflow-y:auto;border:1px solid var(--line);background:var(--field);border-radius:12px;padding:14px;font-size:15px;line-height:24px;outline:none}
+.field::placeholder{color:var(--faint)}
+.field:focus{border-color:var(--vio);box-shadow:0 0 0 1px var(--vio)}
+.field.err{border-color:var(--red);box-shadow:0 0 0 1px var(--red)}
+.label{display:flex;align-items:baseline;justify-content:space-between;gap:12px;flex-wrap:wrap}
+.label b{font-size:13px}
+.label span{font-size:12px;color:var(--faint)}
+.label span.chg{color:var(--pri);font-weight:700}
+.group{display:flex;flex-direction:column;gap:8px}
+.chips{display:flex;flex-wrap:wrap;gap:8px}
+.chip{display:inline-flex;align-items:center;gap:6px;border:1px solid var(--line);background:var(--white);color:var(--muted);font-size:13px;font-weight:600;border-radius:999px;padding:6px 14px;transition:border-color .12s}
+.chip:hover{border-color:var(--wave)}
+.chip[aria-pressed="true"]{background:var(--sel);border-color:var(--vio);color:var(--pri);font-weight:700}
+.chip.static{background:var(--chip-grey);border-color:var(--chip-grey);cursor:default}
+.chip.param{color:var(--ink)}
+.chip.param .svg{color:var(--faint)}
+.row{display:flex;align-items:center;gap:12px;flex-wrap:wrap}
+.row .grow{flex:1}
+.divider{height:1px;background:var(--line);border:0;margin:0}
+.more{display:flex;flex-direction:column;gap:20px}
+.stepper{display:inline-flex;align-items:center;gap:10px;border:1px solid var(--line);background:var(--white);border-radius:999px;padding:3px 4px}
+.stepper button{width:28px;height:28px;border-radius:50%;background:var(--sel);color:var(--pri);display:grid;place-items:center}
+.stepper b{font-variant-numeric:tabular-nums;min-width:36px;text-align:center;font-size:14px}
+.types{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:12px}
+.type{border:1px solid var(--line);border-radius:12px;padding:14px;text-align:left;display:flex;flex-direction:column;gap:2px;background:var(--white)}
+.type b{font-size:14px}
+.type span{font-size:12px;color:var(--muted);line-height:16px}
+.type[aria-pressed="true"]{background:var(--sel);border-color:var(--vio)}
+.vocals{border:1px solid var(--line);background:var(--field);border-radius:12px;padding:16px;display:flex;flex-direction:column;gap:12px}
+.vocals-h{display:flex;gap:12px;align-items:center}
+.vocals-h div{flex:1;min-width:0}
+.vocals-h b{font-size:14px}
+.vocals-h p{font-size:12px;color:var(--muted)}
+.toggle{width:44px;height:24px;border-radius:999px;background:#D8D2E6;padding:3px;display:flex;flex:none;transition:background .15s}
+.toggle i{width:18px;height:18px;border-radius:50%;background:#fff;transition:transform .15s}
+.toggle[aria-checked="true"]{background:var(--pri)}
+.toggle[aria-checked="true"] i{transform:translateX(20px)}
+.lyrics{min-height:104px}
+.summary{display:flex;flex-direction:column;align-items:flex-end;gap:2px;text-align:right}
+.summary b{font-size:13px;font-weight:600;color:var(--muted)}
+.summary span{font-size:12px;color:var(--faint)}
+.summary span.out{color:var(--red)}
+.trust{display:flex;align-items:center;justify-content:center;gap:8px;font-size:13px;color:var(--muted);flex-wrap:wrap}
+.trust b{font-weight:600}
+.alert{display:flex;gap:12px;border-radius:12px;padding:16px;text-align:left}
+.alert div{display:flex;flex-direction:column;gap:4px;min-width:0}
+.alert b{font-size:14px}
+.alert p{font-size:13px;color:var(--muted);line-height:19px}
+.alert .row{margin-top:8px}
+.a-red{background:var(--red-bg);color:var(--red)} .a-red b{color:var(--ink)}
+.a-amber{background:var(--amber-bg);color:var(--amber)} .a-amber b{color:var(--ink)}
+.a-info{background:var(--sel);color:var(--pri)} .a-info b{color:var(--ink)}
+.a-green{background:var(--green-bg);color:var(--green)} .a-green b{color:var(--ink)}
+.steps{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:16px;list-style:none;margin:0;padding:0;text-align:left}
+.step{background:var(--white);border:1px solid var(--line);border-radius:12px;padding:16px;display:flex;flex-direction:column;gap:12px}
+.step .n{width:32px;height:32px;border-radius:50%;background:var(--vio);color:#fff;font-weight:700;font-size:14px;display:grid;place-items:center;flex:none}
+.step div{display:flex;flex-direction:column;gap:4px}
+.step b{font-size:15px}
+.step span{font-size:13px;line-height:17px;color:var(--muted)}
+.hint{font-size:12px;color:var(--faint)}
+
+/* generating */
+.gen-wave{display:flex;justify-content:center;gap:3px;align-items:center;height:64px}
+.gen-wave i{width:3px;border-radius:2px;background:var(--wave);transition:background .2s}
+.gen-wave i.on{background:var(--pri)}
+.gen-wave.run i{animation:bob 1.1s ease-in-out infinite}
+@keyframes bob{50%{transform:scaleY(.55)}}
+.gen-head{display:flex;align-items:flex-end;gap:16px}
+.gen-head h2{font-size:26px;font-weight:900}
+.gen-head .pct{font-size:26px;font-weight:900;color:var(--pri);font-variant-numeric:tabular-nums;text-align:right}
+.bar{height:8px;border-radius:999px;background:var(--line);overflow:hidden}
+.bar i{display:block;height:100%;background:var(--pri);border-radius:999px;transition:width .2s linear}
+.stages{display:flex;flex-direction:column;gap:14px;list-style:none;margin:0;padding:0}
+.stages li{display:flex;align-items:center;gap:12px;font-size:15px}
+.dot{width:24px;height:24px;border-radius:50%;display:grid;place-items:center;flex:none}
+.dot.done{background:var(--green-bg);color:var(--green)}
+.dot.now{background:var(--pri)} .dot.now::after{content:"";width:8px;height:8px;border-radius:50%;background:#fff}
+.dot.todo{border:2px solid var(--line);background:#fff}
+.stages li.todo{color:var(--faint)}
+.stages li.now b{font-weight:700}
+.stages em{font-style:normal;font-size:12px;font-weight:700;color:var(--pri)}
+.err-ic{width:56px;height:56px;border-radius:50%;background:var(--red-bg);color:var(--red);display:grid;place-items:center;flex:none}
+
+/* result */
+.back{align-self:flex-start}
+.quote{font-size:15px;line-height:22px;flex:1;min-width:0}
+.track{background:var(--white);border:1px solid var(--line);border-radius:16px;padding:20px;display:flex;flex-direction:column;gap:16px;box-shadow:var(--shadow-card)}
+.track.playing{border-color:var(--vio);box-shadow:0 0 0 .5px var(--vio),var(--shadow-card)}
+.t-head{display:flex;align-items:center;gap:14px}
+.t-head .meta{flex:1;min-width:0}
+.t-head .meta b{font-size:18px;font-weight:800;display:block}
+.t-head .meta span{font-size:13px;color:var(--muted)}
+.play{width:48px;height:48px;border-radius:50%;background:var(--sel);color:var(--pri);display:grid;place-items:center;flex:none}
+.play.on{background:var(--pri);color:#fff}
+.play.sm{width:36px;height:36px}
+.badge{display:inline-flex;align-items:center;gap:5px;border-radius:999px;padding:4px 10px;font-size:12px;font-weight:700;white-space:nowrap}
+.badge.preview{background:var(--chip-grey);color:var(--muted)}
+.badge.lic{background:var(--green-bg);color:var(--green)}
+.t-wave{display:flex;align-items:center;gap:16px}
+.wf{position:relative;flex:1;height:44px;cursor:pointer;min-width:0}
+.wf>div{position:absolute;inset:0;display:flex;align-items:center;justify-content:space-between}
+.wf i{width:3px;border-radius:2px;background:var(--wave)}
+.wf .top i{background:var(--pri)}
+.wf>.lockz{right:0;top:-4px;bottom:-4px;justify-content:center;align-items:center;border-left:2px dashed var(--vio);background:linear-gradient(90deg,rgba(255,255,255,.55),rgba(255,255,255,.8));pointer-events:none}
+.lockz span{display:inline-flex;align-items:center;gap:4px;font-size:11px;font-weight:700;color:var(--muted);background:var(--white);border:1px solid var(--line);border-radius:999px;padding:2px 8px;white-space:nowrap}
+.pv-end{display:flex;align-items:center;gap:8px;background:var(--sel);color:var(--pri);border-radius:10px;padding:10px 12px;font-size:13px}
+.pv-end span{color:var(--ink);font-weight:600}
+.time{font-size:13px;font-weight:600;color:var(--muted);font-variant-numeric:tabular-nums;min-width:74px;text-align:right}
+.t-actions{display:flex;align-items:center;gap:12px;flex-wrap:wrap}
+.fmt{border:1px solid var(--line);border-radius:8px;padding:11px 12px;background:var(--white);font-weight:700;font-size:15px;appearance:none;padding-right:34px;background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='16' height='16' viewBox='0 0 24 24' fill='none' stroke='%236F6788' stroke-width='2' stroke-linecap='round'%3E%3Cpath d='m6 9 6 6 6-6'/%3E%3C/svg%3E");background-repeat:no-repeat;background-position:right 10px center;cursor:pointer}
+.wm{display:flex;align-items:center;gap:6px;font-size:12px;color:var(--faint);margin-left:auto}
+.mini{display:flex;align-items:center;gap:12px;background:var(--white);border:1px solid var(--line);border-radius:12px;padding:12px}
+.mini .meta{flex:1;min-width:0}
+.mini .meta b{font-size:15px;display:block}
+.mini .meta span{font-size:12px;color:var(--muted)}
+.sec-label{font-size:13px;font-weight:700;color:var(--muted)}
+
+/* paywall (live PDFGuru layout) */
+.pw{max-width:1370px;margin:0 auto;display:flex;flex-direction:column;gap:32px}
+.pw-top{display:flex;align-items:center;gap:24px;flex-wrap:wrap}
+.pw-top h1{font-size:48px;font-weight:900;color:var(--dark);flex:1;min-width:0;line-height:1.1}
+.btn-cont{background:var(--pri);color:#fff;font-weight:800;font-size:22px;border-radius:8px;height:62px;width:370px;max-width:100%;display:inline-flex;align-items:center;justify-content:center;gap:8px}
+.btn-cont:hover{background:var(--pri-h)}
+.pw-body{display:grid;grid-template-columns:435px minmax(0,1fr);gap:30px;align-items:stretch}
+.song{background:var(--white);border:1px solid var(--line2);border-radius:24px;padding:6px;display:flex;flex-direction:column}
+.song-ready{background:var(--mint);border-radius:18px;padding:22px;display:flex;align-items:center;gap:10px;font-weight:700;font-size:17px}
+.song-ready .grow{flex:1}
+.mp3{background:var(--pink);color:#fff;font-weight:800;font-size:18px;border-radius:8px;padding:4px 10px}
+.song-body{flex:1;display:flex;flex-direction:column;align-items:center;gap:18px;padding:64px 24px 24px;background:radial-gradient(circle at 50% 42%,#F1ECFE 0,#fff 62%)}
+.tile{width:96px;height:96px;border-radius:22px;background:linear-gradient(135deg,#7A3BE8,#B08AF7);display:grid;place-items:center;color:#fff;box-shadow:0 12px 28px rgba(124,58,237,.28)}
+.song-wave{display:flex;align-items:center;gap:4px;height:76px}
+.song-wave i{width:3.5px;border-radius:2px;background:linear-gradient(#A673F7,#7233E0)}
+.song-name{font-weight:700;font-size:18px}
+.song-meta{display:flex;gap:8px;align-items:center;font-size:13px;color:var(--grey-t)}
+.song-meta i{font-style:normal;background:var(--tint);color:var(--vio);font-weight:800;font-size:12px;border-radius:999px;padding:3px 10px}
+.lic-box{margin-top:auto;width:100%;border:1px solid var(--line);border-radius:14px;padding:16px;display:flex;flex-direction:column;gap:8px;background:#fff;text-align:left}
+.lic-box .h{display:flex;gap:8px;align-items:center;color:var(--green);font-weight:800;font-size:14px}
+.lic-box .r{display:flex;gap:8px;align-items:center;font-size:13px}
+.lic-box small{font-size:12px;color:var(--muted)}
+.plans{display:flex;flex-direction:column;gap:12px}
+.plan{background:var(--white);border:1px solid var(--line2);border-radius:16px;overflow:hidden;text-align:left;width:100%}
+.plan.sel{border-color:#C9C9C9}
+.pop{background:var(--pop);display:flex;justify-content:center;align-items:center;gap:6px;font-size:15px;font-weight:700;padding:6px}
+.plan-h{display:flex;align-items:center;gap:22px;padding:36px 25px}
+.plan.sel .plan-h{padding-bottom:18px}
+.radio{width:36px;height:36px;border-radius:50%;border:2px solid var(--grey-t);flex:none;display:grid;place-items:center}
+.plan.sel .radio{border:0;background:var(--pri)}
+.plan.sel .radio::after{content:"";width:12px;height:12px;border-radius:50%;background:#fff}
+.plan-name{font-size:28px;flex:1;min-width:0}
+.plan.sel .plan-name{font-weight:800}
+.price{font-weight:800;font-size:30px;white-space:nowrap;color:var(--dark)}
+.price sup{font-size:17px;vertical-align:14px}
+.price small{font-size:13px;color:var(--grey-t);font-weight:400}
+.feats{list-style:none;margin:0;padding:0 25px 38px 83px;display:flex;flex-direction:column;gap:14px}
+.feats li{display:flex;align-items:center;gap:12px;font-size:18px}
+.feats li.off{color:#4A4A4A}
+.feats li.new{font-weight:700}
+.new-tag{font-size:11px;font-weight:800;color:var(--green);background:var(--green-bg);border-radius:999px;padding:2px 8px}
+.link-back{color:var(--pri);font-weight:700;font-size:14px;display:inline-flex;gap:6px;align-items:center}
+.co{max-width:1300px;margin:0 auto;display:grid;grid-template-columns:minmax(0,685px) minmax(0,565px);gap:20px;align-items:start}
+.co-l{background:var(--white);border-radius:16px;padding:32px 38px;display:flex;flex-direction:column;gap:20px}
+.co-total{display:flex;align-items:center;justify-content:space-between;gap:12px}
+.co-total b{font-size:22px}
+.xpay{height:50px;border-radius:8px;background:#000;color:#fff;font-weight:700;font-size:20px;display:flex;align-items:center;justify-content:center;gap:12px;width:100%}
+.xpay.card{background:#555;justify-content:space-between;padding:0 20px}
+.xpay:hover{opacity:.88}
+.xpay[aria-busy="true"]{opacity:.6}
+.cards{display:flex;gap:6px;align-items:center}
+.mc{position:relative;width:40px;height:26px}
+.mc::before,.mc::after{content:"";position:absolute;top:1px;width:24px;height:24px;border-radius:50%}
+.mc::before{left:0;background:#EB001B}.mc::after{left:15px;background:#F79E1B;opacity:.9}
+.visa{font-weight:900;font-style:italic;color:#fff;font-size:16px}
+.amex{background:#2E77BC;color:#fff;font-size:9px;font-weight:900;width:36px;height:36px;display:grid;place-items:center}
+.co-plan{font-size:19px;font-weight:800;text-transform:uppercase}
+.co-feats{list-style:none;margin:0;padding:0;display:flex;flex-direction:column;gap:14px}
+.co-feats li{display:flex;align-items:center;gap:12px;font-size:18px}
+.legal{font-size:14px;line-height:21px;color:var(--grey-t)}
+.legal u{color:var(--pri)}
+.co-r{display:flex;flex-direction:column;gap:20px}
+.co-r .song-body{padding:36px 24px 28px}
+.co-sum{background:var(--lav);border-radius:12px;padding:30px 38px;display:flex;justify-content:space-between;align-items:center;font-size:26px}
+.proto-note{align-self:flex-start;font-size:12px;font-weight:700;color:var(--amber);background:var(--amber-bg);border-radius:999px;padding:4px 12px}
+
+/* modal + drawer */
+.ov{position:fixed;inset:0;background:var(--overlay);z-index:50;display:flex;justify-content:center;align-items:flex-start;padding:max(48px,env(safe-area-inset-top,0px)) 16px 48px;overflow-y:auto;animation:fade .15s}
+@keyframes fade{from{opacity:0}}
+.dlg{background:var(--white);border-radius:20px;box-shadow:var(--shadow-pop);width:100%;max-width:560px;padding:32px;display:flex;flex-direction:column;gap:20px;position:relative}
+.dlg h2{font-size:26px;font-weight:900;line-height:1.2}
+.x{width:36px;height:36px;border-radius:50%;background:var(--chip-grey);color:var(--muted);display:grid;place-items:center;flex:none}
+.dlg-top{display:flex;align-items:flex-start;justify-content:space-between;gap:12px}
+.sel-track{display:flex;align-items:center;gap:12px;background:var(--field);border:1px solid var(--line);border-radius:12px;padding:12px}
+.sel-track .meta{flex:1;min-width:0}
+.sel-track b{font-size:16px;font-weight:800;display:block}
+.sel-track span{font-size:12px;color:var(--muted)}
+.rights{display:flex;flex-direction:column;gap:10px}
+.rights .r{display:flex;align-items:center;gap:10px;font-size:14px}
+.ri{width:20px;height:20px;border-radius:50%;display:grid;place-items:center;flex:none}
+.ri.ok{background:var(--green-bg);color:var(--green)}
+.ri.no{background:var(--red-bg);color:var(--red)}
+.keep{display:flex;gap:8px;align-items:center;color:var(--green);font-weight:700;font-size:13px;padding-top:4px}
+.input{display:flex;align-items:center;gap:10px;border:1px solid var(--line);background:var(--field);border-radius:12px;padding:0 14px}
+.input:focus-within{border-color:var(--vio);box-shadow:0 0 0 1px var(--vio)}
+.input input{border:0;background:transparent;outline:none;padding:14px 0;flex:1;min-width:0;font-size:15px}
+.input.err{border-color:var(--red)}
+.field-err{font-size:12px;color:var(--red);font-weight:700}
+.ok-ic{width:56px;height:56px;border-radius:50%;background:var(--green-bg);color:var(--green);display:grid;place-items:center}
+.fmts{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+.pdf-row{display:flex;align-items:center;gap:12px;background:var(--field);border:1px solid var(--line);border-radius:12px;padding:16px;flex-wrap:wrap}
+.pdf-row .ic{width:40px;height:40px;border-radius:10px;background:var(--tint);color:var(--pri);display:grid;place-items:center;flex:none}
+.pdf-row div.meta{flex:1;min-width:0}
+.pdf-row b{font-size:15px;display:block}
+.pdf-row span{font-size:12px;color:var(--muted)}
+.drawer-ov{justify-content:flex-end;padding:0;align-items:stretch}
+.drawer{background:var(--white);width:100%;max-width:480px;min-height:100%;padding:32px;display:flex;flex-direction:column;gap:20px;box-shadow:var(--shadow-pop);animation:slide .2s ease-out}
+@keyframes slide{from{transform:translateX(40px);opacity:.5}}
+.drawer h2{font-size:24px;font-weight:900}
+.kv{display:flex;flex-direction:column}
+.kv div{display:grid;grid-template-columns:140px minmax(0,1fr);gap:12px;padding:10px 0;border-top:1px solid var(--line);font-size:13px}
+.kv div:first-child{border-top:0}
+.kv span{color:var(--muted)}
+.kv b{overflow-wrap:anywhere}
+.cert-wrap{max-width:640px}
+.cert{background:#fff;border:1px solid var(--line);border-radius:6px;padding:48px;display:flex;flex-direction:column;gap:20px;aspect-ratio:595/842;max-width:100%}
+.cert-h{display:flex;align-items:center;justify-content:space-between;gap:12px}
+.cert h3{font-size:30px;font-weight:900}
+.cert .kv div{font-size:12px;grid-template-columns:150px minmax(0,1fr)}
+.cert-lists{display:grid;grid-template-columns:1fr 1fr;gap:20px}
+.cert-lists b{font-size:12px;font-weight:800}
+.cert-lists ul{list-style:none;margin:6px 0 0;padding:0;display:flex;flex-direction:column;gap:6px;font-size:11px}
+.cert-lists li{display:flex;gap:6px;align-items:flex-start}
+.verify{margin-top:auto;display:flex;gap:16px;align-items:center;background:var(--field);border:1px solid var(--line);border-radius:12px;padding:16px}
+.qr{display:grid;grid-template-columns:repeat(21,1fr);width:84px;height:84px;flex:none}
+.qr i{background:var(--ink)} .qr i.o{background:transparent}
+.verify b{font-size:12px;display:block}
+.verify span{font-size:10px;color:var(--muted)}
+.fine{font-size:9px;color:var(--faint)}
+
+/* bits */
+.toast{position:fixed;left:50%;bottom:calc(24px + env(safe-area-inset-bottom,0px));transform:translateX(-50%);background:var(--ink);color:#fff;border-radius:10px;padding:12px 18px;font-size:14px;font-weight:600;z-index:80;max-width:calc(100% - 32px);box-shadow:var(--shadow-pop)}
+.pbar{position:fixed;left:0;right:0;bottom:0;background:#fff;z-index:30;padding:10px 16px calc(16px + env(safe-area-inset-bottom,0px));box-shadow:0 -4px 24px rgba(36,30,53,.14);display:flex;flex-direction:column;gap:10px}
+.pbar .bar{height:4px}
+.pbar .row{flex-wrap:nowrap}
+.pbar .meta{flex:1;min-width:0}
+.pbar b{font-size:15px;font-weight:800;display:block;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.pbar span{font-size:12px;color:var(--muted);font-variant-numeric:tabular-nums}
+.proto-btn{position:fixed;left:16px;bottom:calc(16px + env(safe-area-inset-bottom,0px));z-index:60;background:var(--ink);color:#fff;border-radius:999px;padding:10px 14px;font-size:13px;font-weight:700;display:flex;gap:6px;align-items:center;box-shadow:var(--shadow-pop)}
+.proto{position:fixed;left:16px;bottom:calc(64px + env(safe-area-inset-bottom,0px));z-index:60;background:#fff;border:1px solid var(--line);border-radius:14px;box-shadow:var(--shadow-pop);padding:16px;width:300px;max-width:calc(100% - 32px);display:flex;flex-direction:column;gap:12px;font-size:13px}
+.proto h4{margin:0;font-size:14px}
+.proto label{display:flex;gap:8px;align-items:center}
+.proto select{width:100%;padding:8px;border:1px solid var(--line);border-radius:8px}
+.proto .hint{line-height:16px}
+body.has-pbar .proto-btn{bottom:calc(112px + env(safe-area-inset-bottom,0px))}
+body.has-pbar .proto{bottom:calc(160px + env(safe-area-inset-bottom,0px))}
+
+@media (max-width:1100px){
+  .pw-body{grid-template-columns:minmax(0,1fr)}
+  .song-body{padding-top:32px}
+  .co{grid-template-columns:minmax(0,1fr)}
+  .co-r{order:-1}
+  .steps-top{gap:10px;font-size:15px}
+  .steps-top .st{gap:8px}
+  .steps-top .st span{display:none}
+  .steps-top .st.now span{display:inline}
+  .steps-top hr{width:16px}
+  body.co-mode .hdr-in{gap:16px}
+}
+@media (max-width:720px){
+  main{padding-top:28px}
+  .hdr-in{height:60px;gap:16px}
+  .hdr nav,.hdr .btn-login,.hdr .avatar{display:none}
+  .burger{display:grid}
+  .hero h1{font-size:28px}
+  .hero p{font-size:15px}
+  .page-title{font-size:24px}
+  .card,.track{padding:16px}
+  .types,.steps{grid-template-columns:minmax(0,1fr)}
+  .actions{flex-wrap:wrap}
+  .actions .summary{align-items:flex-start;text-align:left;width:100%;order:3}
+  .actions .gen{width:100%;order:4}
+  .pw-top h1{font-size:28px}
+  .btn-cont{width:100%}
+  .plan-h{padding:22px 16px;gap:14px}
+  .plan-name{font-size:19px}
+  .price{font-size:22px}
+  .feats{padding:0 16px 22px 16px}
+  .feats li{font-size:15px}
+  .co-l{padding:24px 16px}
+  .co-feats li{font-size:15px}
+  .co-sum{padding:20px;font-size:18px}
+  .dlg{padding:24px 18px}
+  .cert{padding:24px;aspect-ratio:auto}
+  .cert-lists{grid-template-columns:1fr}
+  .kv div{grid-template-columns:110px minmax(0,1fr)}
+  .wm{display:none}
+  .steps-top{gap:8px;font-size:14px}
+  .steps-top .st span{display:none}
+  .steps-top .st.now span{display:inline}
+  .steps-top hr{width:12px}
+  body.co-mode .hdr-in .sp{display:none}
+  body.co-mode .hdr-in{justify-content:space-between}
+  .time{min-width:0}
+}
+@media (prefers-reduced-motion:reduce){*{animation:none!important;transition:none!important}}
+</style>
+
+<header class="hdr">
+  <div class="hdr-in">
+    <a href="#" aria-label="PDFGuru home" data-action="home"><svg width="124" height="33" viewBox="0 0 124 33" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true"><path d="M68.93 10.05a8 8 0 0 0-.8-1.17c-1.13-1.28-2.64-1.92-4.51-1.92-1.41 0-2.66.35-3.73 1.07-1.08.71-1.91 1.72-2.5 3.02-.59 1.3-.89 2.85-.89 4.65s.3 3.35.89 4.66c.59 1.32 1.42 2.32 2.5 3.02 1.07.7 2.32 1.05 3.73 1.05 1.87 0 3.38-.65 4.51-1.94.31-.35.57-.75.8-1.17v2.13c0 1.12-.22 2.03-.66 2.74-.44.71-1.03 1.24-1.79 1.59-.75.35-1.6.52-2.55.52-.95 0-1.81-.16-2.59-.47a7.05 7.05 0 0 1-2.13-1.35l-2.4 3.32c.81.82 1.82 1.47 3.02 1.96 1.2.49 2.65.73 4.34.73 1.8 0 3.41-.34 4.83-1.01 1.41-.68 2.52-1.69 3.33-3.04.81-1.35 1.22-3.05 1.22-5.1V7.42h-4.62v2.63Zm-3.68 10.22c-1.2 0-2.17-.38-2.9-1.15-.73-.77-1.09-1.91-1.09-3.42s.36-2.65 1.09-3.42c.73-.77 1.7-1.15 2.9-1.15s2.17.38 2.9 1.15c.73.77 1.09 1.91 1.09 3.42s-.36 2.66-1.09 3.42c-.73.77-1.7 1.15-2.9 1.15ZM87.95 18.11c0 1.35-.32 2.38-.97 3.09-.65.71-1.48 1.07-2.5 1.07s-1.82-.36-2.48-1.07c-.66-.71-.99-1.74-.99-3.09V7.42h-4.62v11.63c0 2.28.58 4.08 1.74 5.38 1.16 1.3 2.65 1.96 4.48 1.96 1.27 0 2.38-.33 3.33-.98.83-.57 1.5-1.37 2.01-2.4v2.92h4.62V7.42h-4.62v10.69ZM100.03 11.35V7.42h-4.62v18.51h4.62v-9.71c0-1.47.33-2.5.99-3.09.66-.59 1.57-.89 2.73-.89h2.01V6.96c-1.51 0-2.74.42-3.72 1.26-.88.76-1.55 1.81-2.01 3.13ZM118.68 7.42v10.69c0 1.35-.33 2.38-.97 3.09-.65.71-1.48 1.07-2.5 1.07s-1.82-.36-2.48-1.07c-.66-.71-.99-1.74-.99-3.09V7.42h-4.62v11.63c0 2.28.58 4.08 1.74 5.38 1.16 1.3 2.65 1.96 4.48 1.96 1.27 0 2.38-.33 3.33-.98.83-.57 1.5-1.37 2.01-2.4v2.92h4.62V7.42h-4.62Z" fill="#1D1D1D"/><path d="M46.52 5.09c.45-.41 1.09-.61 1.93-.61.44 0 .85.03 1.23.1.38.07.77.16 1.16.28V.95a15.2 15.2 0 0 0-3.23-.46c-1.99 0-3.55.54-4.67 1.62-1.12 1.08-1.68 2.72-1.68 4.91v.38h-3.57V.95h-4.62v9.42a6.27 6.27 0 0 0-.78-1.26c-1.14-1.43-2.66-2.15-4.53-2.15-1.41 0-2.66.39-3.73 1.17l-.15.12c-2.08.49-4.08 1.05-6.14 1.77a6.8 6.8 0 0 0-1.74-1.88c-1.06-.78-2.31-1.17-3.75-1.17-1.88 0-3.39.71-4.53 2.15-.3.38-.56.79-.78 1.25-.14.28-.25.58-.36.9l.36-3.84H2.31L0 32.04h4.62l1.44-15.37.1-1.05c.26-1.37.97-2.41 1.57-3.14.74-.91 1.7-1.36 2.88-1.36.96 0 1.77.3 2.43.87-1.06.65-1.99 1.52-2.89 2.39-2.2 2.11-3.64 6.1-2.46 9.03.34.86 1.23 1.94 1.92 2.35 1.86 1.13 4.62.75 6.38-.54 1.06-.78 1.9-1.89 2.5-3.34.6-1.44.9-3.18.9-5.2 0-1.45-.16-2.74-.46-3.89.81-.37 1.65-.71 2.49-1.01-.51 1.38-.77 3.02-.77 4.9 0 2.03.3 3.76.89 5.2.59 1.44 1.42 2.56 2.5 3.34 1.07.78 2.32 1.17 3.73 1.17 1.88 0 3.39-.72 4.53-2.17.3-.38.56-.8.78-1.26v2.97h4.62V11.3h3.57v14.64h4.58V11.3h4.79V7.42h-4.79v-.56c0-.77.23-1.36.68-1.77ZM14.1 20.67c-.38.92-1.1 1.86-2.2 1.8-.39-.02-.77-.2-.95-.56-.13-.26-.16-.57-.15-.86.06-1.65 1.08-3.16 2.24-4.25.5-.47 1.01-.92 1.53-1.35.04.38.06.79.06 1.23 0 1.89-.09 2.92-.53 4Zm15.29 1.56c-1.2 0-2.17-.45-2.9-1.36-.73-.91-1.09-2.31-1.09-4.19 0-1.89.36-3.28 1.09-4.19.73-.91 1.7-1.36 2.9-1.36s2.17.45 2.9 1.36c.73.91 1.09 2.31 1.09 4.19 0 1.89-.36 3.28-1.09 4.19-.73.91-1.7 1.36-2.9 1.36Z" fill="#D2284B"/></svg></a>
+    <nav aria-label="Main">
+      <button class="tools" data-action="toast" data-msg="The tools menu is outside this prototype">
+        <svg class="svg" width="18" height="18" viewBox="0 0 24 24" fill="currentColor"><rect x="3" y="3" width="8" height="8" rx="1"/><rect x="13" y="3" width="8" height="8" rx="1"/><rect x="3" y="13" width="8" height="8" rx="1"/><rect x="13" y="13" width="8" height="8" rx="1"/></svg>Tools
+        <svg class="svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="m6 9 6 6 6-6"/></svg>
+      </button>
+      <button data-action="toast" data-msg="Contact Us is outside this prototype">Contact Us</button>
+    </nav>
+    <span class="sp"></span>
+    <span id="acct"></span>
+    <nav class="steps-top" id="steps-top" aria-label="Checkout progress"></nav>
+    <button class="burger" aria-label="Menu" data-action="toast" data-msg="The mobile menu is outside this prototype"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#1D1D1D" stroke-width="2" stroke-linecap="round"><path d="M4 6h16M4 12h16M4 18h16"/></svg></button>
+  </div>
+</header>
+
+<main id="app"></main>
+<div id="modal-root"></div>
+<div id="pbar-root"></div>
+<div id="toast" class="toast" role="status" hidden></div>
+
+<button class="proto-btn" data-action="proto" aria-expanded="false" aria-controls="proto">
+  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 1 1-4 0v-.09a1.65 1.65 0 0 0-1.08-1.51 1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 1 1 0-4h.09a1.65 1.65 0 0 0 1.51-1.08 1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 1 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 1 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1Z"/></svg>
+  Prototype
+</button>
+<div class="proto" id="proto" hidden>
+  <h4>Prototype controls</h4>
+  <label for="jump">Jump to a screen</label>
+  <select id="jump">
+    <option value="">Choose…</option>
+    <option value="empty">01 Create — empty</option>
+    <option value="quick">02 Create — quick path</option>
+    <option value="more">03 Create — More options</option>
+    <option value="blocked">04 Create — blocked request</option>
+    <option value="limit">05 Create — limit reached</option>
+    <option value="generating">06 Generating</option>
+    <option value="error">07 Generating — error</option>
+    <option value="result">08 Result</option>
+    <option value="edit">09 Edit &amp; regenerate</option>
+    <option value="gate">10 Account gate</option>
+    <option value="paywall">10a Paywall — plans</option>
+    <option value="checkout">10d Checkout</option>
+    <option value="done">11 Download complete</option>
+    <option value="license">12 License details</option>
+    <option value="cert">14 PDF certificate</option>
+  </select>
+  <label><input type="checkbox" id="p-err"> Fail the next generation</label>
+  <label><input type="checkbox" id="p-sub"> Signed in with a plan (skips paywall)</label>
+  <button class="btn btn-sec btn-sm" data-action="reset-gens">Reset free generations to 3</button>
+  <button class="btn btn-sec btn-sm" data-action="reset-all">Start over</button>
+  <p class="hint">Every track plays the same placeholder audio file until the real model is connected. Downloads and payments are simulated; no money is taken.</p>
+</div>
+
+<script>
+(() => {
+'use strict';
+/* ---------- icons ---------- */
+const P = {
+  play:'<path d="M7 4.5v15a1 1 0 0 0 1.5.86l12.5-7.5a1 1 0 0 0 0-1.72L8.5 3.64A1 1 0 0 0 7 4.5z" fill="currentColor" stroke="none"/>',
+  pause:'<rect x="6" y="4" width="4" height="16" rx="1" fill="currentColor" stroke="none"/><rect x="14" y="4" width="4" height="16" rx="1" fill="currentColor" stroke="none"/>',
+  shuffle:'<path d="m18 14 4 4-4 4"/><path d="m18 2 4 4-4 4"/><path d="M2 18h1.973a4 4 0 0 0 3.3-1.7l5.454-8.6a4 4 0 0 1 3.3-1.7H22"/><path d="M2 6h1.972a4 4 0 0 1 3.6 2.2"/><path d="M22 18h-6.041a4 4 0 0 1-3.3-1.8l-.359-.45"/>',
+  sparkles:'<path d="M9.937 15.5A2 2 0 0 0 8.5 14.063l-6.135-1.582a.5.5 0 0 1 0-.962L8.5 9.936A2 2 0 0 0 9.937 8.5l1.582-6.135a.5.5 0 0 1 .963 0L14.063 8.5A2 2 0 0 0 15.5 9.937l6.135 1.581a.5.5 0 0 1 0 .964L15.5 14.063a2 2 0 0 0-1.437 1.437l-1.582 6.135a.5.5 0 0 1-.963 0z"/>',
+  download:'<path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" x2="12" y1="15" y2="3"/>',
+  check:'<path d="M20 6 9 17l-5-5"/>', x:'<path d="M18 6 6 18"/><path d="m6 6 12 12"/>',
+  down:'<path d="m6 9 6 6 6-6"/>', up:'<path d="m18 15-6-6-6 6"/>', right:'<path d="m9 18 6-6-6-6"/>', left:'<path d="m12 19-7-7 7-7"/><path d="M19 12H5"/>',
+  shield:'<path d="M20 13c0 5-3.5 7.5-7.66 8.95a1 1 0 0 1-.67-.01C7.5 20.5 4 18 4 13V6a1 1 0 0 1 1-1c2 0 4.5-1.2 6.24-2.72a1.17 1.17 0 0 1 1.52 0C14.51 3.81 17 5 19 5a1 1 0 0 1 1 1z"/><path d="m9 12 2 2 4-4"/>',
+  lock:'<rect width="18" height="11" x="3" y="11" rx="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/>',
+  info:'<circle cx="12" cy="12" r="10"/><path d="M12 16v-4"/><path d="M12 8h.01"/>',
+  clock:'<circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/>',
+  music:'<path d="M9 18V5l12-2v13"/><circle cx="6" cy="18" r="3"/><circle cx="18" cy="16" r="3"/>',
+  note:'<circle cx="8" cy="18" r="4" fill="currentColor" stroke="none"/><path d="M12 18V2l7 4"/>',
+  ban:'<circle cx="12" cy="12" r="10"/><path d="m4.9 4.9 14.2 14.2"/>',
+  minus:'<path d="M5 12h14"/>', plus:'<path d="M5 12h14"/><path d="M12 5v14"/>',
+  mic:'<path d="M12 2a3 3 0 0 0-3 3v7a3 3 0 0 0 6 0V5a3 3 0 0 0-3-3Z"/><path d="M19 10v2a7 7 0 0 1-14 0v-2"/><line x1="12" x2="12" y1="19" y2="22"/>',
+  pencil:'<path d="M21.174 6.812a1 1 0 0 0-3.986-3.987L3.842 16.174a2 2 0 0 0-.5.83l-1.321 4.352a.5.5 0 0 0 .623.622l4.353-1.32a2 2 0 0 0 .83-.497z"/>',
+  refresh:'<path d="M3 12a9 9 0 0 1 9-9 9.75 9.75 0 0 1 6.74 2.74L21 8"/><path d="M21 3v5h-5"/><path d="M21 12a9 9 0 0 1-9 9 9.75 9.75 0 0 1-6.74-2.74L3 16"/><path d="M8 16H3v5"/>',
+  alert:'<path d="m21.73 18-8-14a2 2 0 0 0-3.48 0l-8 14A2 2 0 0 0 4 21h16a2 2 0 0 0 1.73-3"/><path d="M12 9v4"/><path d="M12 17h.01"/>',
+  mail:'<rect width="20" height="16" x="2" y="4" rx="2"/><path d="m22 7-8.97 5.7a1.94 1.94 0 0 1-2.06 0L2 7"/>',
+  file:'<path d="M15 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V7Z"/><path d="M14 2v4a2 2 0 0 0 2 2h4"/><path d="M10 9H8"/><path d="M16 13H8"/><path d="M16 17H8"/>',
+  external:'<path d="M15 3h6v6"/><path d="M10 14 21 3"/><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"/>',
+  okc:'<circle cx="12" cy="12" r="10"/><path d="m8 12.5 2.8 2.8L16.5 9.5"/>',
+  okf:'<circle cx="12" cy="12" r="11" fill="currentColor" stroke="none"/><path d="m7.5 12.5 3 3 6-6.5" stroke="#fff" stroke-width="2.6"/>',
+  xf:'<circle cx="12" cy="12" r="11" fill="#DDDDDD" stroke="none"/><path d="M8.5 8.5l7 7M15.5 8.5l-7 7" stroke="#fff" stroke-width="2.4"/>',
+  rocket:'<path d="M4.5 16.5c-1.5 1.26-2 5-2 5s3.74-.5 5-2c.71-.84.7-2.13-.09-2.91a2.18 2.18 0 0 0-2.91-.09z"/><path d="m12 15-3-3a22 22 0 0 1 2-3.95A12.88 12.88 0 0 1 22 2c0 2.72-.78 7.5-6 11a22.35 22.35 0 0 1-4 2z"/>',
+  user:'<circle cx="12" cy="8" r="4"/><path d="M4 21a8 8 0 0 1 16 0"/>'
+};
+const ic = (n, s = 18, sw = 2) => `<svg class="svg" width="${s}" height="${s}" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="${sw}" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">${P[n]}</svg>`;
+const esc = s => String(s).replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+
+/* ---------- data ---------- */
+const USE = {
+  'Reels / TikTok': {dur:30, type:'Track', mood:'Upbeat', short:'Reels'},
+  'Ad or promo':    {dur:15, type:'Jingle', mood:'Upbeat', short:'Ad'},
+  'Presentation':   {dur:120, type:'Loop', mood:'Calm', short:'Presentation'},
+  'Podcast intro':  {dur:15, type:'Jingle', mood:'Inspiring', short:'Podcast intro'},
+  'YouTube video':  {dur:120, type:'Track', mood:'Calm', short:'YouTube'},
+  'Game or app':    {dur:60, type:'Loop', mood:'Playful', short:'Game'}
+};
+const TYPES = [['Track','Full piece with an intro and ending — videos, podcasts'],['Loop','Repeats seamlessly — backgrounds, games, slides'],['Jingle','Short, catchy hook — ads, intros, logos']];
+const MOODS = ['Upbeat','Calm','Inspiring','Dramatic','Playful','Corporate'];
+const GENRES = ['Pop','Lo-fi','Cinematic','Electronic','Acoustic','Hip-hop','Jazz','Ambient','Rock'];
+const PRESETS = [15,30,60,120];
+const SHUFFLE = [
+  'Calm lo-fi background for a skincare Reel, warm and minimal',
+  'Upbeat acoustic pop with handclaps for a summer sale ad',
+  'Soft piano and strings under a quarterly results presentation',
+  'Playful chiptune loop for a puzzle game menu',
+  'Confident corporate groove for a product launch video',
+  'Warm jazzy intro for a weekly marketing podcast',
+  'Dreamy ambient pads for a meditation app onboarding'
+];
+const BLOCK = /(sounds?\s+like|in the style of|cover of|remix of|taylor swift|drake|beyonc|the weeknd|billie eilish|ed sheeran|eminem|coldplay|metallica|adele|rihanna|bts|dua lipa|harry styles|shake it off|bohemian rhapsody)/i;
+const TITLES = {
+  Upbeat:['Bright Side','Sunny Hustle','Pop Fizz','Good Mood Run'], Calm:['Soft Glow','Morning Ritual','Slow Tide','Quiet Hours'],
+  Inspiring:['Rise Up','Open Road','New Chapter','First Light'], Dramatic:['Edge of Night','Storm Front','Last Stand','Deep Water'],
+  Playful:['Bubble Hop','Pixel Party','Tiny Steps','Jelly Bounce'], Corporate:['Clear Vision','Forward Motion','Big Picture','Next Quarter'],
+  _:['Soft Glow','Morning Ritual','Warm Signal','City Lights']
+};
+const PLANS = [
+  {name:'7-Day Limited Access', d:'0', c:'99', total:'$0.99', full:false},
+  {name:'7-Day Full Access', d:'1', c:'99', total:'$1.99', full:true, pop:true},
+  {name:'Annual Plan', d:'24', c:'95', total:'$24.95', full:true, per:true}
+];
+const FEATS = [['Commercial license + PDF certificate for every download',true,true],['Unlimited music generations',true],['Create original tracks from a prompt',true],['11 music genres',true],['AI-written lyrics you can edit',true],['50+ document, media, and AI tools',true],['Early access to new tools',false],['Faster processing (up to 2x)',false],['Multi-user access',false]];
+const CAN = ['YouTube, TikTok, Instagram Reels and podcasts','Ads, websites and client projects','Presentations, games and apps'];
+const CANT = ['Selling it as music on Spotify, Apple Music or other stores','Registering it in YouTube Content ID'];
+
+/* ---------- state ---------- */
+const blankForm = () => ({prompt:'', use:null, dur:30, type:'Track', mood:null, genre:null, vocals:false, voice:'Female', lyrics:''});
+const S = {
+  view:'create', form:blankForm(), more:false, blocked:false, emptyErr:false,
+  edit:false, baseline:null,
+  gensLeft:3, simErr:false,
+  gen:null, tracks:[], earlier:[], trackCount:0,
+  user:null, plan:0, pending:null, paying:null,
+  modal:null, modalTrack:null, doneFmt:'MP3',
+  fmt:{}, lastPlayed:null, gateEmail:'', gateErr:''
+};
+const hasPlan = () => !!(S.user && S.user.plan);
+
+/* ---------- helpers ---------- */
+const lenLabel = s => s < 60 ? `${s} s` : (s % 60 ? fmtT(s) : `${s/60} min`);
+const fmtT = s => `${Math.floor(s/60)}:${String(Math.floor(s%60)).padStart(2,'0')}`;
+function summary(f) {
+  return [f.use && USE[f.use].short, lenLabel(f.dur), f.type, f.mood, f.genre, f.vocals ? `${f.voice} vocals` : 'Instrumental'].filter(Boolean).join(' · ');
+}
+function paramChips(f) {
+  return [f.use && `For ${USE[f.use].short}`, lenLabel(f.dur), f.type, f.genre, f.mood, f.vocals ? `${f.voice} vocals` : 'Instrumental'].filter(Boolean);
+}
+function changes(f, b) {
+  if (!b) return [];
+  return ['prompt','use','dur','type','mood','genre','vocals','voice','lyrics'].filter(k => f[k] !== b[k]);
+}
+function hash(str) { let h = 2166136261; for (const ch of str) { h ^= ch.charCodeAt(0); h = Math.imul(h, 16777619); } return h >>> 0; }
+function bars(seed, n) {
+  const out = []; for (let i = 0; i < n; i++) { const v = .18 + .82 * Math.abs(Math.sin(i * .37 + seed) * Math.cos(i * .11 + seed * 1.7)); out.push(Math.round(v * 100)); } return out;
+}
+const barCount = () => window.innerWidth < 720 ? 52 : 118;
+const today = () => new Date().toLocaleDateString('en-US', {month:'short', day:'numeric', year:'numeric'});
+const todayLong = () => new Date().toLocaleDateString('en-US', {month:'long', day:'numeric', year:'numeric'});
+const rid = () => Math.random().toString(36).slice(2, 6).toUpperCase().padEnd(4, 'X');
+const maskEmail = e => { const [a, d] = e.split('@'); return (a ? a[0] : '') + '•••@' + (d || 'company.com'); };
+const findTrack = id => S.tracks.concat(S.earlier).find(t => t.id === id);
+const PREVIEW = 5; // seconds a track plays before it is licensed
+const previewLimit = t => Math.min(PREVIEW, t.dur);
+function timeText(t) {
+  const active = t.playing || t.pos > 0;
+  if (t.lic) return active ? `${fmtT(t.pos)} / ${fmtT(t.dur)}` : fmtT(t.dur);
+  return active ? `${fmtT(t.pos)} / ${fmtT(previewLimit(t))} preview` : `${fmtT(previewLimit(t))} preview · ${fmtT(t.dur)}`;
+}
+
+let toastT;
+function toast(msg) { const el = document.getElementById('toast'); el.textContent = msg; el.hidden = false; clearTimeout(toastT); toastT = setTimeout(() => el.hidden = true, 2800); }
+
+/* ---------- audio: one static placeholder file stands in for every generated track ---------- */
+const STUB_SRC = 'placeholder-track.wav';
+const Player = {
+  el:null, track:null, timer:null, t0:0, base:0,
+  audio() {
+    if (!this.el) { this.el = new Audio(STUB_SRC); this.el.loop = true; this.el.preload = 'auto'; }
+    return this.el;
+  },
+  play(t) {
+    this.stop();
+    if (!t.lic && t.pos >= previewLimit(t) - .05) t.pos = 0;
+    t.previewEnded = false;
+    const a = this.audio();
+    a.volume = 1;
+    try { a.currentTime = a.duration ? t.pos % a.duration : 0; } catch (e) {}
+    const p = a.play();
+    if (p && p.catch) p.catch(() => toast('Audio playback is not available in this browser'));
+    this.track = t; this.base = t.pos; this.t0 = performance.now();
+    this.timer = setInterval(() => this.tick(), 50);
+    S.lastPlayed = t.id; t.playing = true;
+    renderPlayState();
+  },
+  pause() {
+    if (!this.track) return;
+    this.track.playing = false; clearInterval(this.timer); this.timer = null;
+    if (this.el) this.el.pause();
+    this.track = null; renderPlayState();
+  },
+  stop() { if (this.track) this.pause(); },
+  seek(t, frac) {
+    const lim = t.lic ? t.dur : previewLimit(t), want = frac * t.dur;
+    if (!t.lic && want > lim) toast(`The full ${fmtT(t.dur)} track unlocks after download. Previews play the first ${PREVIEW} seconds.`);
+    t.pos = Math.max(0, Math.min(lim - .1, want));
+    if (t.playing) this.play(t); else updateProgress(t);
+  },
+  tick() {
+    const t = this.track; if (!t) return;
+    t.pos = this.base + (performance.now() - this.t0) / 1000;
+    if (!t.lic) {
+      const lim = previewLimit(t);
+      if (t.pos >= lim - .5) this.el.volume = Math.max(0, (lim - t.pos) / .5); // short fade at the end of the preview
+      if (t.pos >= lim) { t.pos = lim; t.previewEnded = true; updateProgress(t); this.pause(); return; }
+    } else if (t.pos >= t.dur) { t.pos = 0; this.pause(); }
+    updateProgress(t);
+  }
+};
+
+/* ---------- views ---------- */
+const app = document.getElementById('app');
+
+function renderAcct() {
+  document.getElementById('acct').innerHTML = S.user
+    ? `<button class="avatar" data-action="toast" data-msg="${esc(S.user.email)}${S.user.plan ? ' · ' + esc(S.user.plan) : ' · no plan yet'}"><i>${esc(S.user.email[0].toUpperCase())}</i>${ic('down',16)}</button>`
+    : `<button class="btn-login" data-action="login">Log in</button>`;
+}
+
+function createView() {
+  const f = S.form, chg = changes(f, S.baseline), limit = S.gensLeft <= 0 && !hasPlan();
+  const counter = hasPlan() ? 'Unlimited generations with your plan' : `${S.gensLeft} of 3 free generations left today`;
+  const heroOrEdit = S.edit
+    ? `<div class="col" style="gap:6px"><button class="btn btn-ghost btn-sm back" data-action="to-result">${ic('left',16)}Back to results</button><h1 class="page-title">Edit &amp; regenerate</h1><p class="sub">Your request is filled in. Change what you need and we’ll make two new versions. The current ones stay on the results page.</p></div>`
+    : `<section class="hero"><span class="eyebrow">AI Music Generator</span><h1>Music for your content, cleared for commercial use</h1><p>Describe it in one sentence and get two royalty-free tracks for ads, Reels, podcasts or presentations in about a minute.</p><div class="deco" aria-hidden="true">${bars(1, 66).map(h => `<i style="height:${Math.max(10,h*.36)}px"></i>`).join('')}</div></section>`;
+
+  const more = S.more ? `
+    <hr class="divider">
+    <div class="more" id="more-panel">
+      <div class="group">
+        <div class="label"><b id="len-l">Length</b><span class="${chg.includes('dur') ? 'chg' : ''}">${chg.includes('dur') ? 'Changed from ' + lenLabel(S.baseline.dur) : 'Reels and TikTok ads work best at 15 s'}</span></div>
+        <div class="row" role="group" aria-labelledby="len-l">
+          ${PRESETS.map(s => `<button class="chip" aria-pressed="${f.dur === s}" data-action="dur" data-v="${s}">${lenLabel(s)}</button>`).join('')}
+          <span class="hint" style="font-size:13px">or exact</span>
+          <span class="stepper"><button aria-label="5 seconds shorter" data-action="step" data-v="-5">${ic('minus',14)}</button><b aria-live="polite">${fmtT(f.dur)}</b><button aria-label="5 seconds longer" data-action="step" data-v="5">${ic('plus',14)}</button></span>
+        </div>
+      </div>
+      <div class="group"><div class="label"><b id="type-l">Type</b></div>
+        <div class="types" role="group" aria-labelledby="type-l">${TYPES.map(([t,d]) => `<button class="type" aria-pressed="${f.type === t}" data-action="type" data-v="${t}"><b>${t}</b><span>${d}</span></button>`).join('')}</div>
+      </div>
+      <div class="group"><div class="label"><b id="mood-l">Mood</b></div>
+        <div class="chips" role="group" aria-labelledby="mood-l">${MOODS.map(m => `<button class="chip" aria-pressed="${f.mood === m}" data-action="mood" data-v="${m}">${m}</button>`).join('')}</div>
+        <div class="label" style="margin-top:6px"><b id="genre-l">Genre (optional)</b></div>
+        <div class="chips" role="group" aria-labelledby="genre-l">${GENRES.map(g => `<button class="chip" aria-pressed="${f.genre === g}" data-action="genre" data-v="${g}">${g}</button>`).join('')}</div>
+      </div>
+      <div class="vocals">
+        <div class="vocals-h"><span style="color:var(--pri)">${ic('mic',20)}</span><div><b id="voc-l">Add vocals</b><p>Instrumental works best under a voice-over. Vocals need lyrics and take a little longer.</p></div>
+          <button class="toggle" role="switch" aria-checked="${f.vocals}" aria-labelledby="voc-l" data-action="vocals"><i></i></button></div>
+        ${f.vocals ? `
+          <label class="sr" for="lyrics" hidden>Lyrics</label>
+          <textarea id="lyrics" class="field lyrics" placeholder="Write your lyrics, or generate them from your description" data-input="lyrics">${esc(f.lyrics)}</textarea>
+          <div class="row"><button class="btn btn-tint btn-sm" data-action="write-lyrics">${ic('sparkles',16)}Write lyrics from my description</button><span class="grow"></span><b style="font-size:13px">Voice</b>
+            ${['Female','Male'].map(v => `<button class="chip" aria-pressed="${f.voice === v}" data-action="voice" data-v="${v}">${v}</button>`).join('')}</div>` : ''}
+      </div>
+    </div>` : '';
+
+  const blocked = S.blocked ? `
+    <div class="alert a-red" id="blocked" role="alert">${ic('ban',20)}<div><b>We can’t imitate real artists or existing songs</b>
+      <p>Describe the mood, instruments or tempo instead — for example “bright acoustic pop with handclaps, happy and summery”. This keeps your track safe for commercial use.</p>
+      <div class="row"><button class="btn btn-sec btn-sm" data-action="suggest">${ic('sparkles',16)}Use this suggestion</button></div></div></div>` : '';
+
+  const limitAlert = limit ? `
+    <div class="alert a-amber" role="status">${ic('clock',20)}<div><b>You’ve used all 3 free generations for today</b>
+      <p>New free generations unlock tomorrow. A PDFGuru plan gives you unlimited generations and licensed downloads.</p>
+      <div class="row"><button class="btn btn-pri btn-sm" data-action="see-plans">See plans</button>${S.tracks.length ? '<button class="btn btn-ghost btn-sm" data-action="to-result">Listen to your last tracks</button>' : ''}</div></div></div>` : '';
+
+  const cta = S.edit ? 'Regenerate with changes' : 'Generate music';
+  const sumLine = S.edit ? `${chg.length ? chg.length + (chg.length === 1 ? ' change' : ' changes') + ' · ' : ''}Makes 2 new versions · uses 1 generation` : summary(f);
+  const left = S.edit
+    ? `<button class="btn btn-ghost btn-sm" data-action="to-result">Keep current versions</button>`
+    : `<button class="btn btn-tint btn-sm" data-action="shuffle">${ic('shuffle',16)}Shuffle</button>
+       <button class="btn btn-ghost btn-sm" data-action="more" aria-expanded="${S.more}" aria-controls="more-panel">${S.more ? 'Hide options' : 'More options'}${ic(S.more ? 'up' : 'down',16)}</button>`;
+
+  const extra = S.edit ? `
+    <div class="col" style="gap:10px"><span class="sec-label">Current versions</span>${S.tracks.map(t => miniRow(t)).join('')}</div>` : `
+    <div class="trust">${`<span style="color:var(--green)">${ic('shield',16)}</span>`}<b>Royalty-free for ads, social media and client work</b><span aria-hidden="true">·</span><span>Free 5-second preview — pay only to download</span></div>
+    ${!f.prompt && !S.tracks.length ? `
+      <ol class="steps" aria-label="How it works">${[['Describe it','One sentence is enough — or open More options'],['Listen to two versions','Free 5-second previews, no sign-up needed'],['Download with a license','We compose two unique versions for you to keep']].map((s,i) => `<li class="step"><span class="n">${i+1}</span><div><b>${s[0]}</b><span>${s[1]}</span></div></li>`).join('')}</ol>` : ''}`;
+
+  return `
+  <div class="col">
+    ${heroOrEdit}
+    <section class="card ${S.edit ? 'focus' : ''}" aria-label="Describe your track">
+      <label for="prompt" hidden>Describe the music you need</label>
+      <textarea id="prompt" class="field ${S.blocked || S.emptyErr ? 'err' : ''}" data-input="prompt" placeholder="Describe the music you need — e.g. “upbeat background for a 30-second product Reel”">${esc(f.prompt)}</textarea>
+      ${S.emptyErr ? '<span class="field-err" id="empty-err">Describe the music first, or press Shuffle for an idea.</span>' : ''}
+      ${blocked}
+      <div class="group">
+        <div class="label"><b id="use-l">What is it for?</b><span>Optional · sets length and style for you</span></div>
+        <div class="chips" role="group" aria-labelledby="use-l">${Object.keys(USE).map(u => `<button class="chip" aria-pressed="${f.use === u}" data-action="use" data-v="${esc(u)}">${u}</button>`).join('')}</div>
+      </div>
+      ${more}
+      ${limitAlert}
+      <div class="row actions">
+        ${left}
+        <span class="grow"></span>
+        <div class="summary"><b id="sum">${esc(sumLine)}</b><span class="${limit ? 'out' : ''}">${counter}</span></div>
+        <button class="btn btn-pri btn-md gen" data-action="generate" ${limit || S.blocked ? 'disabled' : ''}>${ic(S.edit ? 'refresh' : 'sparkles',18)}${cta}</button>
+      </div>
+    </section>
+    ${extra}
+  </div>`;
+}
+
+function reqSummary(r) {
+  return `<div class="group"><span class="sec-label">Your request</span><p style="font-size:15px">“${esc(r.prompt)}”</p><div class="chips">${paramChips(r).map(p => `<span class="chip static">${esc(p)}</span>`).join('')}</div></div>`;
+}
+function genView() {
+  const g = S.gen, stages = ['Reading your description','Picking instruments and tempo','Composing two versions','Mastering the audio'];
+  const idx = g.p < 22 ? 0 : g.p < 48 ? 1 : g.p < 86 ? 2 : 3;
+  if (g.err) return `
+  <div class="col"><section class="card" aria-live="polite">
+    <div class="row" style="flex-wrap:nowrap;align-items:flex-start"><span class="err-ic">${ic('alert',26)}</span><div style="min-width:0"><h2 style="font-size:26px;font-weight:900">That took longer than expected</h2><p class="sub" style="font-size:14px">The music service didn’t respond in time. Your request is saved, and this attempt doesn’t count towards your daily limit.</p></div></div>
+    <div class="row"><button class="btn btn-pri btn-md" data-action="retry">${ic('refresh',18)}Try again</button><button class="btn btn-sec btn-md" data-action="edit-req">${ic('pencil',18)}Edit request</button></div>
+    <hr class="divider">${reqSummary(g.req)}
+    <div class="row"><span style="color:var(--faint)">${ic('info',16)}</span><span class="hint" style="font-size:13px;color:var(--muted)">Still not working? Try a shorter description or a different use case.</span></div>
+  </section></div>`;
+  const left = Math.max(1, Math.round((100 - g.p) / 100 * 65));
+  return `
+  <div class="col"><section class="card" aria-live="polite" aria-busy="true">
+    <div class="gen-wave run" id="gw" role="progressbar" aria-label="Generation progress" aria-valuemin="0" aria-valuemax="100" aria-valuenow="${Math.floor(g.p)}">${bars(2, window.innerWidth < 720 ? 56 : 110).map((h,i,a) => `<i style="height:${Math.max(6,h*.64)}px;animation-delay:${(i%12)*.07}s" class="${i/a.length < g.p/100 ? 'on' : ''}"></i>`).join('')}</div>
+    <div class="gen-head"><div style="flex:1;min-width:0"><h2>Composing your tracks…</h2><p class="sub" style="font-size:14px">Two versions, so you can pick the one that fits</p></div>
+      <div><div class="pct" id="pct">${Math.floor(g.p)}%</div><div class="hint" style="font-size:13px;color:var(--muted);text-align:right" id="eta">About ${left} s left</div></div></div>    <ol class="stages" id="stages">${stages.map((s,i) => { const st = i < idx ? 'done' : i === idx ? 'now' : 'todo'; return `<li class="${st}"><span class="dot ${st}">${st === 'done' ? ic('check',14,2.6) : ''}</span><b style="font-weight:${st === 'now' ? 700 : 400}">${s}</b>${st === 'now' ? '<em>in progress</em>' : ''}</li>`; }).join('')}</ol>
+    <hr class="divider">${reqSummary(g.req)}
+    <div class="row"><span style="color:var(--faint)">${ic('info',16)}</span><span class="grow" style="font-size:13px;color:var(--muted)">Keep this tab open — generation usually takes 1–2 minutes.</span><button class="btn btn-sec btn-sm" data-action="cancel-gen">Cancel</button></div>
+  </section></div>`;
+}
+
+function badge(t) {
+  return t.lic ? `<span class="badge lic">${ic('shield',13)}Licensed for commercial use</span>` : `<span class="badge preview" title="Download to get a commercial license">${ic('lock',13)}Preview only</span>`;
+}
+function wave(t, n) {
+  const b = bars(t.seed, n).map(h => `<i style="height:${Math.max(8,h)}%"></i>`).join('');
+  const p = t.pos / t.dur * 100;
+  return `<div class="wf" id="wf-${t.id}" data-action="seek" data-id="${t.id}" role="slider" tabindex="0" aria-label="Seek ${esc(t.title)}" aria-valuemin="0" aria-valuemax="${t.dur}" aria-valuenow="${Math.floor(t.pos)}"><div>${b}</div><div class="top" style="clip-path:inset(0 ${100-p}% 0 0)">${b}</div>${t.lic ? '' : `<div class="lockz" style="left:${previewLimit(t) / t.dur * 100}%"><span>${ic('lock',12)}Full track after download</span></div>`}</div>`;
+}
+function trackCard(t) {
+  const fmt = S.fmt[t.id] || 'MP3';
+  return `
+  <article class="track ${t.playing ? 'playing' : ''}" id="tr-${t.id}">
+    <div class="t-head">
+      <button class="play ${t.playing ? 'on' : ''}" data-action="play" data-id="${t.id}" aria-label="${t.playing ? 'Pause' : 'Play'} ${esc(t.title)}">${ic(t.playing ? 'pause' : 'play',20)}</button>
+      <div class="meta"><b>${esc(t.title)}</b><span>Version ${t.ver} · ${fmtT(t.dur)} · ${esc([t.req.genre, t.req.vocals ? t.req.voice + ' vocals' : 'Instrumental'].filter(Boolean).join(' · '))}</span></div>
+      ${badge(t)}
+    </div>
+    <div class="t-wave">${wave(t, barCount())}<span class="time" id="time-${t.id}">${timeText(t)}</span></div>
+    ${t.previewEnded && !t.lic ? `<div class="pv-end" role="status">${ic('lock',16)}<span>That’s the ${PREVIEW}-second preview. Download to get the full ${fmtT(t.dur)} track with a commercial license.</span></div>` : ''}
+    <div class="t-actions">
+      <button class="btn ${t.lic ? 'btn-sec' : 'btn-pri'} btn-md" data-action="download" data-id="${t.id}">${ic('download',18)}${t.lic ? 'Download again' : 'Download'}</button>
+      <label hidden for="fmt-${t.id}">Format</label>
+      <select class="fmt" id="fmt-${t.id}" data-input="fmt" data-id="${t.id}"><option ${fmt === 'MP3' ? 'selected' : ''}>MP3</option><option ${fmt === 'WAV' ? 'selected' : ''}>WAV</option></select>
+      <button class="btn btn-ghost btn-sm" data-action="license" data-id="${t.id}">${ic('info',16)}License details</button>
+      ${t.lic ? '' : `<span class="wm">${ic('lock',14)}Free preview: first ${PREVIEW} s</span>`}
+    </div>
+  </article>`;
+}
+function miniRow(t) {
+  return `<div class="mini"><button class="play sm ${t.playing ? 'on' : ''}" data-action="play" data-id="${t.id}" aria-label="${t.playing ? 'Pause' : 'Play'} ${esc(t.title)}">${ic(t.playing ? 'pause' : 'play',16)}</button>
+    <div class="meta"><b>${esc(t.title)}</b><span>Version ${t.ver} · ${fmtT(t.dur)}</span></div>${badge(t)}
+    <button class="btn btn-sec btn-sm" data-action="download" data-id="${t.id}">${ic('download',16)}${t.lic ? 'Again' : 'Download'}</button></div>`;
+}
+function resultView() {
+  const r = S.tracks[0].req;
+  return `
+  <div class="col">
+    <div class="col" style="gap:6px">
+      <button class="btn btn-ghost btn-sm back" data-action="new">${ic('left',16)}New track</button>
+      <h1 class="page-title">Your tracks are ready</h1>
+      <p class="sub">Hear a 5-second preview of each version and download the one that fits.</p>
+    </div>
+    <section class="card plain" aria-label="Parameters used">
+      <div class="row" style="align-items:flex-start;flex-wrap:nowrap"><p class="quote">“${esc(r.prompt)}”</p><button class="btn btn-tint btn-sm" data-action="edit">${ic('refresh',16)}Edit &amp; regenerate</button></div>
+      <div class="chips" style="align-items:center">${paramChips(r).map(p => `<button class="chip param" data-action="edit">${esc(p)}${ic('pencil',12)}</button>`).join('')}<span class="hint">Click a chip to change it</span></div>
+    </section>
+    ${S.tracks.map(trackCard).join('')}
+    <div class="alert a-info">${ic('shield',20)}<div><b>You pay only for the version you download</b><p>Previews play the first 5 seconds for free. The download is the full track with a PDF license, and it stays valid even if you cancel your plan.</p></div></div>
+    ${S.earlier.length ? `<div class="col" style="gap:10px"><span class="sec-label">Earlier versions</span>${S.earlier.map(miniRow).join('')}</div>` : ''}
+    <div style="text-align:center"><button class="btn btn-sec btn-md" data-action="new">${ic('plus',18)}Start a new track</button></div>
+  </div>`;
+}
+
+function songCard(t, opts = {}) {
+  return `
+  <div class="song">
+    <div class="song-ready"><span style="color:var(--green)">${ic('okf',22)}</span><span class="grow">Your track is ready!</span><span class="mp3">${esc(S.fmt[t.id] || 'MP3')}</span></div>
+    <div class="song-body">
+      <div class="tile">${ic('note',44,2.6)}</div>
+      <div class="song-wave" aria-hidden="true">${bars(t.seed + 1, 29).map(h => `<i style="height:${30 + h*.46}px"></i>`).join('')}</div>
+      <div style="display:flex;flex-direction:column;align-items:center;gap:6px"><span class="song-name">${esc(t.title)}</span><span class="song-meta"><i>${esc(S.fmt[t.id] || 'MP3')}</i>Version ${t.ver} · ${fmtT(t.dur)}</span></div>
+      ${opts.short ? '' : `
+      <div class="lic-box"><span class="h">${ic('shield',18)}Commercial license included</span>
+        ${[['YouTube, TikTok, Reels, podcasts',1],['Ads and client projects',1],['Selling on Spotify or Apple Music',0]].map(r => `<span class="r"><span style="color:${r[1] ? 'var(--green)' : 'var(--red)'}">${ic(r[1] ? 'check' : 'x',14,2.6)}</span>${r[0]}</span>`).join('')}
+        <small>Stays valid even if you cancel your plan.</small></div>`}
+    </div>
+  </div>`;
+}
+const price = p => `<span class="price">$${p.d}.<sup>${p.c}</sup>${p.per ? '<small>/per month</small>' : ''}</span>`;
+function paywallView() {
+  const t = findTrack(S.pending) || S.tracks[0];
+  return `
+  <div class="pw">
+    <div class="pw-top"><h1>Choose a plan to download your file</h1><button class="btn-cont" data-action="continue">Continue${ic('right',22,2.5)}</button></div>
+    <div class="pw-body">
+      ${songCard(t)}
+      <div class="plans" role="radiogroup" aria-label="Plans">
+        ${PLANS.map((p,i) => `
+        <div class="plan ${S.plan === i ? 'sel' : ''}">
+          ${p.pop ? `<div class="pop">${ic('rocket',15)}Most popular</div>` : ''}
+          <button class="plan-h" style="width:100%;text-align:left" role="radio" aria-checked="${S.plan === i}" data-action="plan" data-v="${i}"><span class="radio"></span><span class="plan-name">${p.name}</span>${price(p)}</button>
+          ${S.plan === i ? `<ul class="feats">${FEATS.map(f => { const on = f[1] || p.full; return `<li class="${on ? '' : 'off'} ${f[2] ? 'new' : ''}"><span style="color:var(--green)">${ic(on ? 'okc' : 'xf',26,1.8)}</span>${f[0]}${f[2] ? '<span class="new-tag">NEW</span>' : ''}</li>`; }).join('')}</ul>` : ''}
+        </div>`).join('')}
+      </div>
+    </div>
+    <p class="pw-foot">After 7 days, you will be charged $49.99 (tax incl.)/month unless you cancel 24 hours before the trial ends. To access your first document for free please click <u>here</u>.<br>See our <u>Subscription terms</u> for details on cancellation and refunds. We provide refunds in accordance with our <u>Refund Policy</u>.</p>
+  </div>`;
+}
+function checkoutView() {
+  const t = findTrack(S.pending) || S.tracks[0], p = PLANS[S.plan];
+  const feats = [`Commercial license + PDF certificate for “${t.title}”`, ...FEATS.slice(1).filter(f => f[1] || p.full).map(f => f[0])];
+  const busy = S.paying;
+  const legal = p.per
+    ? `By continuing, you agree to our <u>Terms and Conditions</u> and <u>Privacy Policy</u>. The Annual Plan is billed at $24.95 per month until you cancel in settings. <u>Subscription Policy</u> and <u>Refund Policy</u>. Your music license stays valid after you cancel.`
+    : `By continuing, you agree that, as described in our <u>Terms and Conditions</u> and <u>Privacy Policy</u>, if you don’t cancel at least 24 hours prior to the end of the 7-day trial, you will automatically be charged $49.99 (tax incl.) every month until you cancel in settings. <u>Subscription Policy</u> and <u>Refund Policy</u>. Your music license stays valid after you cancel.`;
+  return `
+  <div class="co">
+    <section class="co-l" aria-label="Checkout">
+      <span class="proto-note">Prototype — no payment is taken</span>
+      <div class="co-total"><b>Total due today:</b>${price({d:p.d,c:p.c})}</div>
+      <b style="font-size:20px">Express checkout</b>
+      <button class="xpay" data-action="pay" data-v="gpay" ${busy ? 'aria-busy="true" disabled' : ''}>${busy === 'gpay' ? 'Processing…' : 'G Pay <span style="opacity:.5">|</span> •••• 8065'}</button>
+      <button class="xpay" data-action="pay" data-v="apple" ${busy ? 'aria-busy="true" disabled' : ''}>${busy === 'apple' ? 'Processing…' : 'Apple Pay'}</button>
+      <button class="xpay card" data-action="pay" data-v="card" ${busy ? 'aria-busy="true" disabled' : ''}><span>${busy === 'card' ? 'Processing…' : 'Pay with card'}</span><span class="cards" aria-hidden="true"><span class="mc"></span><span class="mc"></span><span class="visa">VISA</span><span class="amex">AMEX</span></span></button>
+      <hr class="divider" style="background:#ddd">
+      <span class="co-plan">${p.name}</span>
+      <ul class="co-feats">${feats.map((f,i) => `<li style="font-weight:${i ? 400 : 700}"><span style="color:${i ? '#A58BE8' : 'var(--green)'}">${ic('okc',24,1.6)}</span>${esc(f)}</li>`).join('')}</ul>
+      <hr class="divider" style="background:#ddd">
+      <p class="legal">${legal} For customer support, please call us at <b>+1 (866) 716-6045</b> or e-mail <b>support@pdfguru.com</b>. To access your first document for free please click <u>here</u>.</p>
+    </section>
+    <div class="co-r">
+      ${songCard(t, {short:true})}
+      <div class="co-sum"><span>Total due today:</span>${price({d:p.d,c:p.c})}</div>
+      <div class="alert a-green">${ic('shield',20)}<div><b>The license is issued for “${esc(t.title)}” when you download it.</b></div></div>
+    </div>
+  </div>`;
+}
+
+/* ---------- modals ---------- */
+function selTrack(t, withBadge) {
+  return `<div class="sel-track"><button class="play sm on" style="width:40px;height:40px" data-action="play" data-id="${t.id}" aria-label="Play ${esc(t.title)}">${ic(t.playing ? 'pause' : 'play',18)}</button>
+    <div class="meta"><b>${esc(t.title)}</b><span>Version ${t.ver} · ${fmtT(t.dur)} · ${esc(t.req.genre || (t.req.vocals ? 'Vocals' : 'Instrumental'))}</span></div>${withBadge ? '' : ''}</div>`;
+}
+function rightsList() {
+  return `<div class="rights"><span class="sec-label">What you can do with it</span>
+    ${CAN.map(c => `<span class="r"><span class="ri ok">${ic('check',12,2.6)}</span>${c}</span>`).join('')}
+    ${CANT.map(c => `<span class="r"><span class="ri no">${ic('x',12,2.6)}</span>${c}</span>`).join('')}
+    <span class="keep">${ic('shield',16)}Your license stays valid even if you cancel your plan.</span></div>`;
+}
+function modalHTML() {
+  const t = findTrack(S.modalTrack);
+  if (S.modal === 'gate') return `
+  <div class="ov" data-action="ov"><div class="dlg" role="dialog" aria-modal="true" aria-labelledby="gate-h">
+    <div class="dlg-top"><span class="eyebrow">Download with a commercial license</span><button class="x" data-action="close" aria-label="Close">${ic('x',18)}</button></div>
+    <h2 id="gate-h">Get “${esc(t.title)}” ready for your ${esc(t.req.use ? USE[t.req.use].short : 'project')}</h2>
+    ${selTrack(t)}
+    ${rightsList()}
+    <hr class="divider">
+    <div><b style="font-size:16px;font-weight:800">Create a free account to continue</b><p class="sub" style="font-size:13px;margin-top:4px">Your account keeps your tracks and licenses. Then pick a plan to download the full-quality file with a PDF license.</p></div>
+    <form id="gate-form" novalidate style="display:flex;flex-direction:column;gap:12px">
+      <label for="email" style="font-size:13px;font-weight:700">Email</label>
+      <div class="input ${S.gateErr ? 'err' : ''}"><span style="color:var(--faint)">${ic('mail',18)}</span><input id="email" type="email" autocomplete="email" placeholder="name@company.com" value="${esc(S.gateEmail)}" aria-describedby="email-err"></div>
+      ${S.gateErr ? `<span class="field-err" id="email-err">${S.gateErr}</span>` : ''}
+      <button class="btn btn-pri btn-lg btn-block" type="submit">${ic('download',20)}Continue to download</button>
+    </form>
+    <p style="text-align:center;font-size:13px;color:var(--muted)">Next: pick a plan — from $0.99 for 7 days</p>
+    <p style="text-align:center;font-size:13px;color:var(--muted)">Already have an account? <button style="color:var(--pri);font-weight:700" data-action="demo-login">Log in</button></p>
+  </div></div>`;
+  if (S.modal === 'done') return `
+  <div class="ov" data-action="ov"><div class="dlg" role="dialog" aria-modal="true" aria-labelledby="done-h">
+    <div class="dlg-top"><span class="ok-ic">${ic('check',28,2.6)}</span><button class="x" data-action="close" aria-label="Close">${ic('x',18)}</button></div>
+    <div style="display:flex;flex-direction:column;gap:6px"><h2 id="done-h">Your track is downloading</h2><span class="sub" style="font-size:14px">${esc(t.title)} · Version ${t.ver} · ${S.doneFmt} · ${fmtT(t.dur)}</span><span>${badge(t)}</span></div>
+    <div class="group"><span class="sec-label" id="fmt-l">Need another format?</span>
+      <div class="fmts" role="group" aria-labelledby="fmt-l">${[['MP3','Smaller file · for social and web'],['WAV','Studio quality · for video editing']].map(([k,d]) => `<button class="type" aria-pressed="${S.doneFmt === k}" data-action="done-fmt" data-v="${k}"><b>${k}</b><span>${d}</span></button>`).join('')}</div></div>
+    <div class="pdf-row"><span class="ic">${ic('file',20)}</span><div class="meta"><b>PDF license certificate</b><span>ID ${t.lic.id} · Worldwide, perpetual</span></div><button class="btn btn-sec btn-sm" data-action="cert" data-id="${t.id}">${ic('file',16)}View PDF</button></div>
+    <div class="alert a-info">${ic('info',20)}<div><b>Got a copyright claim on YouTube?</b><p>Share this certificate to dispute it. The license ID shows where the track came from and when it was licensed.</p></div></div>
+    <div class="row"><button class="btn btn-pri btn-md" data-action="close">Done</button><button class="btn btn-ghost btn-sm" data-action="license" data-id="${t.id}">View license details</button></div>
+  </div></div>`;
+  if (S.modal === 'license') {
+    const rows = t.lic
+      ? [['License ID', t.lic.id], ['Track', `${t.title} · Version ${t.ver} · ${t.trackId}`], ['Issued', t.lic.issued], ['Licensed to', maskEmail(t.lic.email)], ['Plan at download', t.lic.plan], ['Territory and term', 'Worldwide, perpetual']]
+      : [['Status', 'Preview only — no license yet'], ['Track', `${t.title} · Version ${t.ver} · ${t.trackId}`], ['License issued', 'When you download this version']];
+    return `
+    <div class="ov drawer-ov" data-action="ov"><aside class="drawer" role="dialog" aria-modal="true" aria-labelledby="lic-h">
+      <div class="dlg-top"><h2 id="lic-h">License details</h2><button class="x" data-action="close" aria-label="Close">${ic('x',18)}</button></div>
+      ${selTrack(t)}<span>${badge(t)}</span>
+      <div class="kv">${rows.map(([k,v]) => `<div><span>${k}</span><b>${esc(v)}</b></div>`).join('')}</div>
+      ${rightsList()}
+      ${t.lic ? `<button class="btn btn-pri btn-md btn-block" data-action="cert" data-id="${t.id}">${ic('file',18)}View PDF license</button>` : `<button class="btn btn-pri btn-md btn-block" data-action="download" data-id="${t.id}">${ic('download',18)}Download to get a license</button>`}
+      <div style="text-align:center"><button class="btn btn-ghost btn-sm" data-action="toast" data-msg="The full license terms page is outside this prototype">Read the full license terms${ic('external',16)}</button></div>
+    </aside></div>`;
+  }
+  if (S.modal === 'cert') {
+    const qs = hash(t.lic.id); let q = '';
+    for (let i = 0; i < 21; i++) for (let j = 0; j < 21; j++) {
+      const finder = (a, b) => i >= a && i < a + 7 && j >= b && j < b + 7 && (i === a || i === a + 6 || j === b || j === b + 6 || (i >= a + 2 && i <= a + 4 && j >= b + 2 && j <= b + 4));
+      const inF = (i < 8 && j < 8) || (i < 8 && j > 12) || (i > 12 && j < 8);
+      const on = inF ? (finder(0,0) || finder(0,14) || finder(14,0)) : ((qs >> ((i * 21 + j) % 29)) ^ (i * 7 + j * 3)) % 3 === 0;
+      q += `<i class="${on ? '' : 'o'}"></i>`;
+    }
+    return `
+    <div class="ov" data-action="ov"><div class="dlg cert-wrap" role="dialog" aria-modal="true" aria-labelledby="cert-h" style="max-width:640px">
+      <div class="dlg-top"><b style="font-size:16px">PDF license · ${esc(t.title)}.pdf</b><button class="x" data-action="close" aria-label="Close">${ic('x',18)}</button></div>
+      <div class="cert">
+        <div class="cert-h">${document.querySelector('.hdr a').innerHTML}<span class="eyebrow" style="font-size:10px;letter-spacing:.06em">COMMERCIAL USE LICENSE</span></div>
+        <div><h3 id="cert-h">License certificate</h3><p class="sub" style="font-size:12px;margin-top:6px">This certificate confirms that the track below may be used commercially under the terms listed. It stays valid if the plan is cancelled.</p></div>
+        <div class="kv">${[['Track', `${t.title} (Version ${t.ver})`], ['Track ID', t.trackId], ['License ID', t.lic.id], ['Issued to', maskEmail(t.lic.email)], ['Plan at download', t.lic.plan], ['Issue date', t.lic.issuedLong], ['Territory and term', 'Worldwide, perpetual']].map(([k,v]) => `<div><span>${k}</span><b>${esc(v)}</b></div>`).join('')}</div>
+        <div class="cert-lists"><div><b style="color:var(--green)">Allowed</b><ul>${CAN.map(c => `<li><span style="color:var(--green)">${ic('check',11,2.6)}</span>${c}</li>`).join('')}</ul></div>
+          <div><b style="color:var(--red)">Not allowed</b><ul>${CANT.map(c => `<li><span style="color:var(--red)">${ic('x',11,2.6)}</span>${c}</li>`).join('')}</ul></div></div>
+        <div class="verify"><div class="qr" aria-label="Verification QR code">${q}</div><div><b>Verify this certificate</b><span>Scan the code or open pdfguru.com/verify/${t.lic.id}. Share it with a client or a platform to dispute a copyright claim.</span></div></div>
+        <p class="fine">This license lets you use the track as described above. It does not transfer copyright ownership. Full terms: pdfguru.com/music-license</p>
+      </div>
+      <div class="row"><button class="btn btn-pri btn-md" data-action="toast" data-msg="${esc(t.title)} license.pdf — download is simulated in the prototype">${ic('download',18)}Download PDF</button><button class="btn btn-sec btn-md" data-action="close">Close</button></div>
+    </div></div>`;
+  }
+  return '';
+}
+
+/* ---------- render ---------- */
+let lastFocus = null;
+function render() {
+  const co = S.view === 'paywall' || S.view === 'checkout';
+  document.body.classList.toggle('grey', co);
+  document.body.classList.toggle('co-mode', co);
+  if (co) {
+    const active = S.view === 'paywall' ? 2 : 3, back = {1:'to-result', 2:'to-paywall'};
+    document.getElementById('steps-top').innerHTML = ['Track is ready','Select plan','Payment details','Download'].map((l, i) => {
+      const n = i + 1, st = n < active ? 'done' : n === active ? 'now' : '';
+      const inner = `<i>${n < active ? ic('check',14,2.6) : n}</i><span>${l}</span>`;
+      return (n < active ? `<button class="st ${st}" data-action="${back[n]}">${inner}</button>` : `<span class="st ${st}" ${st === 'now' ? 'aria-current="step"' : ''}>${inner}</span>`) + (i < 3 ? '<hr>' : '');
+    }).join('');
+  }
+  renderAcct();
+  app.innerHTML = S.view === 'create' ? createView() : S.view === 'generating' ? genView() : S.view === 'result' ? resultView() : S.view === 'paywall' ? paywallView() : checkoutView();
+  renderModal();
+  renderPbar();
+}
+function renderModal() {
+  const root = document.getElementById('modal-root'), had = !!root.innerHTML;
+  root.innerHTML = S.modal ? modalHTML() : '';
+  document.body.style.overflow = S.modal ? 'hidden' : '';
+  if (S.modal && !had) { lastFocus = document.activeElement; const f = root.querySelector('input, [data-action="close"]'); f && f.focus(); }
+  if (!S.modal && had && lastFocus && document.contains(lastFocus)) lastFocus.focus();
+  const form = document.getElementById('gate-form'); if (form) form.addEventListener('submit', onGate);
+}
+function renderPbar() {
+  const root = document.getElementById('pbar-root');
+  const t = S.lastPlayed && findTrack(S.lastPlayed);
+  const show = t && S.view === 'result' && window.innerWidth < 720;
+  document.body.classList.toggle('has-pbar', !!show);
+  root.innerHTML = show ? `<div class="pbar" aria-label="Now playing">
+    <div class="row"><button class="play ${t.playing ? 'on' : ''}" style="width:44px;height:44px" data-action="play" data-id="${t.id}" aria-label="${t.playing ? 'Pause' : 'Play'}">${ic(t.playing ? 'pause' : 'play',20)}</button>
+    <div class="meta"><b>${esc(t.title)}</b><span id="pb-time">Version ${t.ver} · ${timeText(t)}</span></div>
+    <button class="btn btn-pri btn-sm" data-action="download" data-id="${t.id}">${ic('download',16)}${t.lic ? 'Again' : 'Download'}</button></div></div>` : '';
+  if (show) main.style.paddingBottom = '140px'; else main.style.paddingBottom = '';
+}
+const main = document.querySelector('main');
+function renderPlayState() {
+  if (S.view === 'result') { const y = window.scrollY; app.innerHTML = resultView(); window.scrollTo(0, y); }
+  if (S.modal) renderModal();
+  renderPbar();
+}
+function updateProgress(t) {
+  const wf = document.getElementById('wf-' + t.id);
+  if (wf) { wf.children[1].style.clipPath = `inset(0 ${100 - t.pos / t.dur * 100}% 0 0)`; wf.setAttribute('aria-valuenow', Math.floor(t.pos)); }
+  const tm = document.getElementById('time-' + t.id); if (tm) tm.textContent = timeText(t);
+  if (S.lastPlayed === t.id) { const f = document.getElementById('pb-fill'); if (f) f.style.width = (t.pos / t.dur * 100) + '%'; const pt = document.getElementById('pb-time'); if (pt) pt.textContent = `Version ${t.ver} · ${timeText(t)}`; }
+}
+
+/* ---------- flow ---------- */
+let genTimer = null;
+function startGen(req) {
+  Player.stop();
+  S.view = 'generating'; S.gen = {p:0, err:false, req}; S.blocked = false; S.emptyErr = false;
+  render(); window.scrollTo(0, 0);
+  clearInterval(genTimer);
+  genTimer = setInterval(() => {
+    const g = S.gen; g.p = Math.min(100, g.p + .7 + Math.random() * 1.1);
+    if (S.simErr && g.p >= 55) { clearInterval(genTimer); S.simErr = false; document.getElementById('p-err').checked = false; g.err = true; render(); return; }
+    if (g.p >= 100) { clearInterval(genTimer); finishGen(req); return; }
+    updateGen();
+  }, 80);
+}
+function updateGen() {
+  const g = S.gen, stages = document.getElementById('stages'); if (!stages) return;
+  const prevIdx = stages.querySelectorAll('.done').length, idx = g.p < 22 ? 0 : g.p < 48 ? 1 : g.p < 86 ? 2 : 3;
+  if (idx !== prevIdx) { app.innerHTML = genView(); return; }
+  document.getElementById('pct').textContent = Math.floor(g.p) + '%';
+  document.getElementById('eta').textContent = `About ${Math.max(1, Math.round((100 - g.p) / 100 * 65))} s left`;
+  const gw = document.getElementById('gw'); gw.setAttribute('aria-valuenow', Math.floor(g.p));
+  const is = gw.children; for (let i = 0; i < is.length; i++) is[i].classList.toggle('on', i / is.length < g.p / 100);
+}
+function finishGen(req) {
+  if (!hasPlan()) S.gensLeft = Math.max(0, S.gensLeft - 1);
+  const pool = TITLES[req.mood] || TITLES._, base = hash(req.prompt) + S.trackCount;
+  const mk = (ver, k) => ({ id: 't' + (++S.trackCount), ver, req: {...req}, dur: req.dur, pos: 0, playing: false, lic: null,
+    seed: (base + k * 97) % 997, title: pool[(base + k) % pool.length], trackId: `TRK-${1000 + S.trackCount * 37}-${ver}` });
+  S.earlier = S.tracks.concat(S.earlier).slice(0, 6);
+  S.tracks = [mk('A', 0), mk('B', 1)];
+  if (S.tracks[0].title === S.tracks[1].title) S.tracks[1].title = pool[(base + 2) % pool.length];
+  S.edit = false; S.baseline = null; S.view = 'result';
+  render(); window.scrollTo(0, 0);
+}
+function doGenerate() {
+  const f = S.form;
+  if (!f.prompt.trim()) { S.emptyErr = true; render(); document.getElementById('prompt').focus(); return; }
+  if (BLOCK.test(f.prompt)) { S.blocked = true; render(); document.getElementById('blocked').scrollIntoView({block:'center', behavior:'smooth'}); return; }
+  if (S.gensLeft <= 0 && !hasPlan()) return;
+  startGen({...f});
+}
+function startDownload(id) {
+  const t = findTrack(id); if (!t) return;
+  S.pending = id; Player.stop();
+  if (hasPlan()) { grantLicense(t); return; }
+  if (!S.user) { S.modal = 'gate'; S.modalTrack = id; S.gateErr = ''; renderModal(); return; }
+  S.modal = null; S.view = 'paywall'; render(); window.scrollTo(0, 0);
+}
+function grantLicense(t) {
+  if (!t.lic) t.lic = { id: `PG-M-${rid()}-${rid()}`, issued: today(), issuedLong: todayLong(), plan: S.user.plan, email: S.user.email };
+  S.doneFmt = S.fmt[t.id] || 'MP3';
+  S.view = 'result'; S.modal = 'done'; S.modalTrack = t.id; S.pending = null;
+  render();
+}
+function onGate(e) {
+  e.preventDefault();
+  const v = document.getElementById('email').value.trim(); S.gateEmail = v;
+  if (!/^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/.test(v)) { S.gateErr = v ? 'That email doesn’t look right. Check for typos, e.g. name@company.com' : 'Enter your email to create an account'; renderModal(); document.getElementById('email').focus(); return; }
+  S.user = { email: v, plan: null }; S.modal = null; S.view = 'paywall'; S.plan = 0;
+  render(); window.scrollTo(0, 0);
+}
+function openEdit() {
+  Player.stop();
+  S.form = {...S.tracks[0].req}; S.baseline = {...S.tracks[0].req}; S.edit = true; S.more = true; S.view = 'create';
+  render(); window.scrollTo(0, 0);
+}
+function applyUse(u) {
+  const f = S.form;
+  if (f.use === u) { f.use = null; return; }
+  f.use = u; const p = USE[u]; f.dur = p.dur; f.type = p.type; f.mood = p.mood;
+}
+
+/* ---------- sample state for the jump menu ---------- */
+function sample() {
+  if (S.tracks.length) return;
+  S.form = {...blankForm(), prompt:'Calm lo-fi background for a skincare Reel, warm and minimal', use:'Reels / TikTok', mood:'Calm', genre:'Lo-fi'};
+  const req = {...S.form}; const pool = TITLES.Calm;
+  S.tracks = ['A','B'].map((v,k) => ({ id: 't' + (++S.trackCount), ver: v, req, dur: 30, pos: 0, playing: false, lic: null, seed: 3 + k * 4, title: pool[k], trackId: `TRK-8841-${v}` }));
+}
+function jump(v) {
+  Player.stop(); clearInterval(genTimer);
+  S.modal = null; S.edit = false; S.baseline = null; S.blocked = false; S.emptyErr = false; S.paying = null;
+  const P0 = 'Calm lo-fi background for a skincare Reel, warm and minimal';
+  switch (v) {
+    case 'empty': S.form = blankForm(); S.more = false; S.view = 'create'; S.tracks = []; S.earlier = []; if (S.gensLeft <= 0) S.gensLeft = 3; break;
+    case 'quick': S.form = {...blankForm(), prompt:P0}; applyUse('Reels / TikTok'); S.more = false; S.view = 'create'; if (S.gensLeft <= 0) S.gensLeft = 3; break;
+    case 'more': S.form = {...blankForm(), prompt:'Short upbeat jingle for our bakery’s summer sale ad'}; applyUse('Ad or promo'); Object.assign(S.form, {genre:'Pop', vocals:true, lyrics:'Glow up, slow down, it’s your time now\nSimple things, a little shine\nEvery morning feels like mine'}); S.more = true; S.view = 'create'; if (S.gensLeft <= 0) S.gensLeft = 3; break;
+    case 'blocked': S.form = {...blankForm(), prompt:'Something that sounds like Taylor Swift’s “Shake It Off” for my shop ad'}; applyUse('Ad or promo'); S.blocked = true; S.more = false; S.view = 'create'; break;
+    case 'limit': sample(); S.form = {...S.tracks[0].req}; S.gensLeft = 0; if (S.user) S.user.plan = null; document.getElementById('p-sub').checked = false; S.more = false; S.view = 'create'; break;
+    case 'generating': S.form = {...blankForm(), prompt:P0}; applyUse('Reels / TikTok'); S.form.genre = 'Lo-fi'; startGen({...S.form}); return;
+    case 'error': S.form = {...blankForm(), prompt:P0}; applyUse('Reels / TikTok'); S.view = 'generating'; S.gen = {p:55, err:true, req:{...S.form}}; break;
+    case 'result': sample(); S.view = 'result'; break;
+    case 'edit': sample(); openEdit(); S.form.dur = 15; render(); return;
+    case 'gate': sample(); S.user = null; document.getElementById('p-sub').checked = false; S.view = 'result'; S.modal = 'gate'; S.modalTrack = S.tracks[0].id; S.pending = S.tracks[0].id; break;
+    case 'paywall': sample(); S.user = S.user || {email:'you@company.com', plan:null}; S.user.plan = null; S.pending = S.tracks[0].id; S.view = 'paywall'; break;
+    case 'checkout': sample(); S.user = S.user || {email:'you@company.com', plan:null}; S.user.plan = null; S.pending = S.tracks[0].id; S.view = 'checkout'; break;
+    case 'done': case 'license': case 'cert': {
+      sample(); S.user = S.user || {email:'you@company.com', plan:null}; if (!S.user.plan) S.user.plan = PLANS[1].name;
+      const t = S.tracks[0]; if (!t.lic) t.lic = { id: `PG-M-${rid()}-${rid()}`, issued: today(), issuedLong: todayLong(), plan: S.user.plan, email: S.user.email };
+      S.view = 'result'; S.modal = v; S.modalTrack = t.id; S.doneFmt = 'MP3'; document.getElementById('p-sub').checked = true; break; }
+  }
+  render(); window.scrollTo(0, 0);
+}
+
+/* ---------- events ---------- */
+document.addEventListener('click', e => {
+  const el = e.target.closest('[data-action]'); if (!el) return;
+  const a = el.dataset.action, v = el.dataset.v, id = el.dataset.id, f = S.form;
+  if (a === 'ov') { if (e.target === el) { S.modal = null; renderModal(); } return; }
+  if (el.tagName === 'A') e.preventDefault();
+  switch (a) {
+    case 'toast': toast(el.dataset.msg); break;
+    case 'home': case 'new': Player.stop(); S.form = blankForm(); S.more = false; S.edit = false; S.baseline = null; S.view = 'create'; S.modal = null; render(); window.scrollTo(0, 0); break;
+    case 'login': S.modal = null; toast('Log in is outside this prototype. Use “Prototype” → Signed in with a plan.'); break;
+    case 'demo-login': S.user = {email:'you@company.com', plan:null}; S.modal = null; S.view = 'paywall'; render(); window.scrollTo(0,0); toast('Signed in as you@company.com'); break;
+    case 'use': applyUse(v); S.emptyErr = false; render(); break;
+    case 'more': S.more = !S.more; render(); break;
+    case 'dur': f.dur = +v; render(); break;
+    case 'step': f.dur = Math.max(10, Math.min(180, f.dur + (+v))); render(); break;
+    case 'type': f.type = v; render(); break;
+    case 'mood': f.mood = f.mood === v ? null : v; render(); break;
+    case 'genre': f.genre = f.genre === v ? null : v; render(); break;
+    case 'vocals': f.vocals = !f.vocals; render(); break;
+    case 'voice': f.voice = v; render(); break;
+    case 'write-lyrics': f.lyrics = `${f.prompt ? f.prompt.split(',')[0] : 'Here we go'}, feel it now\nEvery little moment, we’ll show you how\nLight it up and let it shine\nThis is the time, this is the time`; render(); break;
+    case 'shuffle': { let n; do { n = SHUFFLE[Math.floor(Math.random() * SHUFFLE.length)]; } while (n === f.prompt && SHUFFLE.length > 1); f.prompt = n; S.blocked = false; S.emptyErr = false; render(); break; }
+    case 'suggest': f.prompt = 'Bright acoustic pop with handclaps, happy and summery, for my shop ad'; S.blocked = false; render(); break;
+    case 'see-plans': sample(); S.pending = S.tracks[0].id; if (!S.user) { S.modal = 'gate'; S.modalTrack = S.pending; renderModal(); } else { S.view = 'paywall'; render(); window.scrollTo(0,0); } break;
+    case 'generate': doGenerate(); break;
+    case 'cancel-gen': clearInterval(genTimer); S.view = S.edit ? 'create' : 'create'; S.form = {...S.gen.req}; render(); toast('Cancelled. This didn’t use a generation.'); break;
+    case 'retry': startGen(S.gen.req); break;
+    case 'edit-req': S.form = {...S.gen.req}; S.more = true; S.view = 'create'; render(); break;
+    case 'to-result': if (!S.tracks.length) { S.view = 'create'; } else { S.view = 'result'; S.edit = false; S.baseline = null; } S.modal = null; render(); window.scrollTo(0,0); break;
+    case 'edit': openEdit(); break;
+    case 'play': { const t = findTrack(id); if (!t) break; if (t.playing) Player.pause(); else Player.play(t); break; }
+    case 'seek': { const t = findTrack(id); const r = el.getBoundingClientRect(); Player.seek(t, (e.clientX - r.left) / r.width); break; }
+    case 'download': startDownload(id); break;
+    case 'license': S.modal = 'license'; S.modalTrack = id; renderModal(); break;
+    case 'cert': S.modal = 'cert'; S.modalTrack = id; renderModal(); break;
+    case 'close': S.modal = null; renderModal(); if (S.view === 'result') renderPlayState(); break;
+    case 'done-fmt': S.doneFmt = v; S.fmt[S.modalTrack] = v; renderModal(); toast(`${findTrack(S.modalTrack).title}.${v.toLowerCase()} — download is simulated in the prototype`); break;
+    case 'plan': S.plan = +v; render(); break;
+    case 'continue': S.view = 'checkout'; render(); window.scrollTo(0,0); break;
+    case 'to-paywall': S.view = 'paywall'; render(); break;
+    case 'pay': S.paying = v; render(); setTimeout(() => { S.paying = null; S.user.plan = PLANS[S.plan].name; document.getElementById('p-sub').checked = true; grantLicense(findTrack(S.pending) || S.tracks[0]); window.scrollTo(0,0); }, 1200); break;
+    case 'proto': { const p = document.getElementById('proto'); p.hidden = !p.hidden; el.setAttribute('aria-expanded', String(!p.hidden)); break; }
+    case 'reset-gens': S.gensLeft = 3; if (S.view === 'create') render(); toast('Free generations reset to 3'); break;
+    case 'reset-all': location.reload(); break;
+  }
+});
+document.addEventListener('input', e => {
+  const k = e.target.dataset.input; if (!k) return;
+  if (k === 'prompt') {
+    S.form.prompt = e.target.value;
+    if (S.blocked || S.emptyErr) { S.blocked = false; S.emptyErr = false; e.target.classList.remove('err'); const b = document.getElementById('blocked'); b && b.remove(); const m = document.getElementById('empty-err'); m && m.remove(); const g = document.querySelector('[data-action="generate"]'); if (g && !(S.gensLeft <= 0 && !hasPlan())) g.disabled = false; }
+    if (S.edit) { const s = document.getElementById('sum'); const c = changes(S.form, S.baseline); s.textContent = `${c.length ? c.length + (c.length === 1 ? ' change' : ' changes') + ' · ' : ''}Makes 2 new versions · uses 1 generation`; }
+  }
+  if (k === 'lyrics') S.form.lyrics = e.target.value;
+});
+document.addEventListener('change', e => {
+  if (e.target.dataset.input === 'fmt') { S.fmt[e.target.dataset.id] = e.target.value; }
+  if (e.target.id === 'jump' && e.target.value) { jump(e.target.value); e.target.value = ''; }
+  if (e.target.id === 'p-err') { S.simErr = e.target.checked; toast(S.simErr ? 'The next generation will fail at about 55%' : 'Generations will succeed'); }
+  if (e.target.id === 'p-sub') {
+    if (e.target.checked) { S.user = S.user || {email:'you@company.com', plan:null}; S.user.plan = S.user.plan || PLANS[1].name; }
+    else if (S.user) S.user.plan = null;
+    render();
+  }
+});
+document.addEventListener('keydown', e => {
+  if (e.key === 'Escape' && S.modal) { S.modal = null; renderModal(); }
+  if (e.target.classList && e.target.classList.contains('wf') && (e.key === 'ArrowRight' || e.key === 'ArrowLeft')) {
+    const t = findTrack(e.target.dataset.id); e.preventDefault(); Player.seek(t, (t.pos + (e.key === 'ArrowRight' ? 5 : -5)) / t.dur);
+  }
+  if ((e.metaKey || e.ctrlKey) && e.key === 'Enter' && e.target.id === 'prompt') doGenerate();
+});
+let rw = window.innerWidth < 720;
+window.addEventListener('resize', () => { const n = window.innerWidth < 720; if (n !== rw) { rw = n; render(); } });
+
+render();
+})();
+</script>
