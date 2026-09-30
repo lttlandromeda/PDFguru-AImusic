@@ -144,6 +144,10 @@ main{padding:56px 16px 120px}
 .toggle[aria-checked="true"]{background:var(--pri)}
 .toggle[aria-checked="true"] i{transform:translateX(20px)}
 .lyrics{min-height:104px}
+.voc-row{display:flex;align-items:center;gap:8px;flex-wrap:wrap}
+.voice{margin-left:auto;display:flex;align-items:center;gap:8px}
+.voice b{font-size:13px}
+.voice-opts{display:flex;gap:8px}
 .summary{display:flex;flex-direction:column;align-items:flex-end;gap:2px;text-align:right}
 .summary b{font-size:13px;font-weight:600;color:var(--muted)}
 .summary span{font-size:12px;color:var(--faint)}
@@ -419,6 +423,15 @@ body.has-pbar .proto{bottom:calc(160px + env(safe-area-inset-bottom,0px))}
   .cert-lists{grid-template-columns:1fr}
   .kv div{grid-template-columns:110px minmax(0,1fr)}
   .wm{display:none}
+  .voc-row{flex-direction:column;align-items:stretch;gap:16px}
+  .voc-lyrics{width:100%;padding:12px;font-size:15px}
+  .voice{margin:0;flex-direction:column;align-items:stretch;gap:8px}
+  .voice-opts{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+  .vopt{justify-content:center;border-radius:12px;padding:11px 14px;font-size:15px}
+  .stack-m{flex-direction:column;align-items:stretch;gap:12px}
+  .stack-m>.btn{width:100%}
+  .stack-m>.btn-ghost{align-self:center;width:auto}
+  .t-actions>.btn:first-child{flex:1 1 100%}
   body.co-mode .hdr .steps-top{display:none}
   .time{min-width:0}
 }
@@ -699,8 +712,8 @@ function createView() {
         ${f.vocals ? `
           <label class="sr" for="lyrics" hidden>Lyrics</label>
           <textarea id="lyrics" class="field lyrics" placeholder="Write your lyrics, or generate them from your description" data-input="lyrics">${esc(f.lyrics)}</textarea>
-          <div class="row"><button class="btn btn-tint btn-sm" data-action="write-lyrics">${ic('sparkles',16)}Write lyrics from my description</button><span class="grow"></span><b style="font-size:13px">Voice</b>
-            ${['Female','Male'].map(v => `<button class="chip" aria-pressed="${f.voice === v}" data-action="voice" data-v="${v}">${v}</button>`).join('')}</div>` : ''}
+          <div class="voc-row"><button class="btn btn-tint btn-sm voc-lyrics" data-action="write-lyrics">${ic('sparkles',16)}Write lyrics from my description</button>
+            <div class="voice"><b id="voice-l">Voice</b><div class="voice-opts" role="radiogroup" aria-labelledby="voice-l">${['Female','Male'].map(v => `<button class="chip vopt" role="radio" aria-checked="${f.voice === v}" aria-pressed="${f.voice === v}" data-action="voice" data-v="${v}">${v}</button>`).join('')}</div></div></div>` : ''}
       </div>
     </div>` : '';
 
@@ -712,7 +725,7 @@ function createView() {
   const limitAlert = limit ? `
     <div class="alert a-amber" role="status">${ic('clock',20)}<div><b>You’ve used all 3 free generations for today</b>
       <p>New free generations unlock tomorrow. A PDFGuru plan gives you unlimited generations and licensed downloads.</p>
-      <div class="row"><button class="btn btn-pri btn-sm" data-action="see-plans">See plans</button>${S.tracks.length ? '<button class="btn btn-ghost btn-sm" data-action="to-result">Listen to your last tracks</button>' : ''}</div></div></div>` : '';
+      <div class="row stack-m"><button class="btn btn-pri btn-sm" data-action="see-plans">See plans</button>${S.tracks.length ? '<button class="btn btn-ghost btn-sm" data-action="to-result">Listen to your last tracks</button>' : ''}</div></div></div>` : '';
 
   const cta = S.edit ? 'Regenerate with changes' : 'Generate music';
   const sumLine = S.edit ? `${chg.length ? chg.length + (chg.length === 1 ? ' change' : ' changes') + ' · ' : ''}Makes 2 new versions · uses 1 generation` : summary(f);
@@ -761,7 +774,7 @@ function genView() {
   if (g.err) return `
   <div class="col"><section class="card" aria-live="polite">
     <div class="row" style="flex-wrap:nowrap;align-items:flex-start"><span class="err-ic">${ic('alert',26)}</span><div style="min-width:0"><h2 style="font-size:26px;font-weight:900">That took longer than expected</h2><p class="sub" style="font-size:14px">The music service didn’t respond in time. Your request is saved, and this attempt doesn’t count towards your daily limit.</p></div></div>
-    <div class="row"><button class="btn btn-pri btn-md" data-action="retry">${ic('refresh',18)}Try again</button><button class="btn btn-sec btn-md" data-action="edit-req">${ic('pencil',18)}Edit request</button></div>
+    <div class="row stack-m"><button class="btn btn-pri btn-md" data-action="retry">${ic('refresh',18)}Try again</button><button class="btn btn-sec btn-md" data-action="edit-req">${ic('pencil',18)}Edit request</button></div>
     <hr class="divider">${reqSummary(g.req)}
     <div class="row"><span style="color:var(--faint)">${ic('info',16)}</span><span class="hint" style="font-size:13px;color:var(--muted)">Still not working? Try a shorter description or a different use case.</span></div>
   </section></div>`;
@@ -933,7 +946,7 @@ function modalHTML() {
       <div class="fmts" role="radiogroup" aria-labelledby="fmt-l">${[['MP3','Smaller file · for social and web'],['WAV','Studio quality · for video editing']].map(([k,d]) => `<button class="type" role="radio" aria-checked="${S.doneFmt === k}" aria-pressed="${S.doneFmt === k}" data-action="done-fmt" data-v="${k}"><b>${k}</b><span>${d}</span></button>`).join('')}</div></div>
     <div class="pdf-row"><span class="ic">${ic('file',20)}</span><div class="meta"><b>PDF license certificate</b><span>ID ${t.lic.id} · Worldwide, perpetual</span></div><button class="btn btn-sec btn-sm" data-action="cert" data-id="${t.id}">${ic('file',16)}View PDF</button></div>
     <div class="alert a-info">${ic('info',20)}<div><b>Got a copyright claim on YouTube?</b><p>Share this certificate to dispute it. The license ID shows where the track came from and when it was licensed.</p></div></div>
-    <div class="row"><button class="btn btn-pri btn-md" data-action="confirm-download" data-id="${t.id}">${ic('download',20)}Download ${S.doneFmt}</button><button class="btn btn-ghost btn-sm" data-action="license" data-id="${t.id}">View license details</button></div>
+    <div class="row stack-m"><button class="btn btn-pri btn-md" data-action="confirm-download" data-id="${t.id}">${ic('download',20)}Download ${S.doneFmt}</button><button class="btn btn-ghost btn-sm" data-action="license" data-id="${t.id}">View license details</button></div>
   </div></div>`;
   if (S.modal === 'license') {
     const rows = t.lic
@@ -970,7 +983,7 @@ function modalHTML() {
         <div class="verify"><div class="qr" aria-label="Verification QR code">${q}</div><div><b>Verify this certificate</b><span>Scan the code or open pdfguru.com/verify/${t.lic.id}. Share it with a client or a platform to dispute a copyright claim.</span></div></div>
         <p class="fine">This license lets you use the track as described above. It does not transfer copyright ownership. Full terms: pdfguru.com/music-license</p>
       </div>
-      <div class="row"><button class="btn btn-pri btn-md" data-action="toast" data-msg="${esc(t.title)} license.pdf — download is simulated in the prototype">${ic('download',18)}Download PDF</button><button class="btn btn-sec btn-md" data-action="back">${ic('left',18)}Go back</button></div>
+      <div class="row stack-m"><button class="btn btn-pri btn-md" data-action="toast" data-msg="${esc(t.title)} license.pdf — download is simulated in the prototype">${ic('download',18)}Download PDF</button><button class="btn btn-sec btn-md" data-action="back">${ic('left',18)}Go back</button></div>
     </div></div>`;
   }
   return '';
