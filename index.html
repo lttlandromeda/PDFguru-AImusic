@@ -265,23 +265,20 @@ main{padding:56px 16px 120px}
 .feats li.new{font-weight:700}
 .new-tag{font-size:11px;font-weight:800;color:var(--green);background:var(--green-bg);border-radius:999px;padding:2px 8px}
 .link-back{color:var(--pri);font-weight:700;font-size:14px;display:inline-flex;gap:6px;align-items:center}
-.co{max-width:1300px;margin:0 auto;display:grid;grid-template-columns:minmax(0,685px) minmax(0,565px);gap:20px;align-items:start}
+.co{max-width:1300px;margin:0 auto;display:grid;grid-template-columns:minmax(0,685px) minmax(0,565px);gap:20px;align-items:start;justify-content:center}
 .co-l{background:var(--white);border-radius:16px;padding:32px 38px;display:flex;flex-direction:column;gap:20px}
 .co-total{display:flex;align-items:center;justify-content:space-between;gap:12px}
 .co-total b{font-size:22px}
 .xpay{height:50px;border-radius:8px;background:#000;color:#fff;font-weight:700;font-size:20px;display:flex;align-items:center;justify-content:center;gap:12px;width:100%}
-.xpay.xpay-card{background:#555;justify-content:space-between;padding:0 20px;gap:12px}
+.xpay.xpay-card{background:var(--white);color:var(--dark);border:1px solid #000;justify-content:space-between;padding:0 20px;gap:12px}
 .xpay-card>span:first-child{white-space:nowrap}
 .xpay-card .cards{flex:none}
-@media (max-width:480px){.xpay.xpay-card{padding:0 14px;font-size:17px}.xpay-card .mc+.mc,.xpay-card .amex{display:none}}
+.gpay-sep{width:1px;height:24px;background:rgba(255,255,255,.5)}
+@media (max-width:480px){.xpay.xpay-card{padding:0 14px;font-size:17px}.xpay-card .cards svg:nth-child(2),.xpay-card .cards svg:nth-child(4){display:none}}
 .xpay:hover{opacity:.88}
 .xpay[aria-busy="true"]{opacity:.6}
 .cards{display:flex;gap:6px;align-items:center}
-.mc{position:relative;width:40px;height:26px}
-.mc::before,.mc::after{content:"";position:absolute;top:1px;width:24px;height:24px;border-radius:50%}
-.mc::before{left:0;background:#EB001B}.mc::after{left:15px;background:#F79E1B;opacity:.9}
-.visa{font-weight:900;font-style:italic;color:#fff;font-size:16px}
-.amex{background:#2E77BC;color:#fff;font-size:9px;font-weight:900;width:36px;height:36px;display:grid;place-items:center}
+.cards svg{display:block;width:52px;height:36px}
 .co-plan{font-size:19px;font-weight:800;text-transform:uppercase}
 .co-feats{list-style:none;margin:0;padding:0;display:flex;flex-direction:column;gap:14px}
 .co-feats li{display:flex;align-items:center;gap:12px;font-size:18px}
@@ -502,6 +499,16 @@ const P = {
   xf:'<circle cx="12" cy="12" r="11" fill="#DDDDDD" stroke="none"/><path d="M8.5 8.5l7 7M15.5 8.5l-7 7" stroke="#fff" stroke-width="2.4"/>',
   rocket:'<path d="M4.5 16.5c-1.5 1.26-2 5-2 5s3.74-.5 5-2c.71-.84.7-2.13-.09-2.91a2.18 2.18 0 0 0-2.91-.09z"/><path d="m12 15-3-3a22 22 0 0 1 2-3.95A12.88 12.88 0 0 1 22 2c0 2.72-.78 7.5-6 11a22.35 22.35 0 0 1-4 2z"/>',
   user:'<circle cx="12" cy="8" r="4"/><path d="M4 21a8 8 0 0 1 16 0"/>'
+};
+/* icons and payment logos exported from the Figma paywall frames */
+const BRAND = {
+  playlist:'<svg width="44" height="44" viewBox="0 0 44 44" fill="none" aria-hidden="true"><path d="M31.1667 5.5C31.6529 5.5 32.1192 5.69315 32.463 6.03697C32.8069 6.38079 33 6.8471 33 7.33333C33 7.81956 32.8069 8.28588 32.463 8.6297C32.1192 8.97351 31.6529 9.16667 31.1667 9.16667H25.6667V31.1667C25.6665 32.7809 25.1338 34.3499 24.1511 35.6305C23.1684 36.9111 21.7906 37.8317 20.2314 38.2495C18.6722 38.6673 17.0188 38.559 15.5274 37.9414C14.036 37.3237 12.7901 36.2313 11.9829 34.8334C11.1756 33.4356 10.8521 31.8104 11.0626 30.21C11.2731 28.6096 12.0057 27.1233 13.1469 25.9816C14.2881 24.84 15.774 24.1068 17.3744 23.8957C18.9747 23.6846 20.6 24.0075 21.9982 24.8142L22 7.33333C22 6.8471 22.1932 6.38079 22.537 6.03697C22.8808 5.69315 23.3471 5.5 23.8333 5.5H31.1667Z" fill="white"/></svg>',
+  star:'<svg width="15" height="15" viewBox="0 0 15 15" fill="none" aria-hidden="true"><path d="M3.64246 13.1216L7.49996 11.0935L11.3487 13.1216L10.6118 8.82598L13.7368 5.7841L9.42433 5.1591L7.49558 1.25098L5.56683 5.1591L1.25433 5.7841L4.37933 8.82598L3.64246 13.1216Z" fill="#1D1D1D"/></svg>',
+  g:'<svg width="20" height="21" viewBox="0 0 20 21" fill="none" aria-hidden="true"><path d="M20.0004 10.5826C20.0004 9.87807 19.9437 9.17355 19.8304 8.4834H10.2075V12.4661H15.7205C15.4937 13.7458 14.7568 14.896 13.6797 15.6149V18.203H16.9676C18.895 16.4057 20.0004 13.7458 20.0004 10.5826Z" fill="#4285F4"/><path d="M10.2083 20.705C12.9577 20.705 15.2819 19.7848 16.9684 18.2032L13.6805 15.6151C12.7593 16.2477 11.583 16.6072 10.2083 16.6072C7.54399 16.6072 5.29064 14.7812 4.48283 12.3369H1.0957V15.0112C2.8247 18.5051 6.35354 20.705 10.2083 20.705Z" fill="#34A853"/><path d="M4.48263 12.3378C4.0574 11.0581 4.0574 9.66344 4.48263 8.36942V5.70947H1.09497C-0.364989 8.62822 -0.364989 12.079 1.09497 14.9977L4.48263 12.3378Z" fill="#FBBC04"/><path d="M10.2083 4.09838C11.6681 4.06962 13.0711 4.63037 14.1198 5.65121L17.0393 2.68933C15.1827 0.935201 12.7451 -0.0281304 10.2083 0.000625748C6.35354 0.000625748 2.8247 2.21485 1.0957 5.70872L4.48283 8.38304C5.29064 5.92439 7.54399 4.09838 10.2083 4.09838Z" fill="#EA4335"/></svg>',
+  mc:'<svg width="52" height="36" viewBox="0 0 52 36" fill="none"><rect width="52" height="36" rx="2.5" fill="white"/><path d="M33.855 6.73291C40.1301 6.73307 45.2171 11.7121 45.2173 17.854C45.2173 23.9961 40.1302 28.9759 33.855 28.9761C31.0415 28.9761 28.4683 27.9728 26.4839 26.3149C24.4995 27.9725 21.927 28.9761 19.1138 28.9761C12.8385 28.9759 7.75146 23.9961 7.75146 17.854C7.75166 11.712 12.8386 6.73304 19.1138 6.73291C21.9268 6.73291 24.4996 7.7357 26.4839 9.39307C28.4683 7.73543 31.0417 6.73291 33.855 6.73291Z" fill="#ED0006"/><path d="M33.8545 6.73291C40.1297 6.73291 45.2166 11.712 45.2168 17.854C45.2168 23.9962 40.1299 28.9761 33.8545 28.9761C31.0412 28.976 28.4687 27.9726 26.4844 26.3149C28.9263 24.2751 30.4766 21.2425 30.4766 17.854C30.4764 14.4654 28.9264 11.4329 26.4844 9.39307C28.4687 7.73561 31.0414 6.73296 33.8545 6.73291Z" fill="#F9A000"/><path d="M26.4844 9.39307C28.9266 11.4329 30.4766 14.4662 30.4766 17.855C30.4764 21.2433 28.9261 24.2752 26.4844 26.3149C24.0426 24.2752 22.4923 21.2433 22.4922 17.855C22.4922 14.4662 24.0422 11.4329 26.4844 9.39307Z" fill="#FF5E00"/></svg>',
+  maestro:'<svg width="52" height="36" viewBox="0 0 52 36" fill="none"><rect width="52" height="36" rx="2.5" fill="white"/><path d="M18.9648 6.75C25.0684 6.75003 30.0165 11.7313 30.0166 17.876C30.0166 24.0208 25.0685 29.0029 18.9648 29.0029C12.8612 29.0029 7.91309 24.0208 7.91309 17.876C7.91323 11.7312 12.8612 6.75 18.9648 6.75Z" fill="#ED0006"/><path d="M33.3022 6.75C39.4058 6.75003 44.3539 11.7313 44.354 17.876C44.354 24.0208 39.4059 29.0029 33.3022 29.0029C27.1986 29.0029 22.2505 24.0208 22.2505 17.876C22.2506 11.7312 27.1986 6.75 33.3022 6.75Z" fill="#0099DF"/><path d="M26.1333 9.41113C28.5086 11.4519 30.0161 14.4858 30.0161 17.876C30.0161 21.2659 28.5083 24.2991 26.1333 26.3398C23.7584 24.2991 22.2505 21.2658 22.2505 17.876C22.2505 14.4859 23.7581 11.4519 26.1333 9.41113Z" fill="#6C6BBD"/></svg>',
+  visa:'<svg width="52" height="36" viewBox="0 0 52 36" fill="none"><rect width="52" height="36" rx="2.5" fill="white"/><path fill-rule="evenodd" clip-rule="evenodd" d="M15.8831 24.3874H12.7329L10.3706 15.2886C10.2585 14.87 10.0205 14.5 9.67026 14.3256C8.79632 13.8873 7.83329 13.5386 6.78271 13.3626V13.0123H11.8574C12.5578 13.0123 13.0831 13.5386 13.1706 14.1497L14.3963 20.713L17.545 13.0123H20.6076L15.8831 24.3874ZM22.3586 24.3874H19.3835L21.8333 13.0123H24.8084L22.3586 24.3874ZM28.6574 16.1636C28.745 15.5509 29.2703 15.2006 29.8831 15.2006C30.8461 15.1127 31.8952 15.2886 32.7707 15.7253L33.2959 13.2762C32.4205 12.9259 31.4574 12.75 30.5835 12.75C27.6959 12.75 25.5948 14.3256 25.5948 16.5124C25.5948 18.1759 27.0831 19.0494 28.1337 19.5756C29.2703 20.1003 29.708 20.4506 29.6205 20.9753C29.6205 21.7624 28.745 22.1127 27.871 22.1127C26.8205 22.1127 25.7699 21.8503 24.8084 21.4121L24.2831 23.8627C25.3337 24.2994 26.4703 24.4753 27.5208 24.4753C30.7586 24.5618 32.7707 22.9877 32.7707 20.625C32.7707 17.6497 28.6574 17.4753 28.6574 16.1636ZM43.1827 24.3874L40.8205 13.0123H38.2831C37.7578 13.0123 37.2325 13.3626 37.0574 13.8873L32.6831 24.3874H35.7458L36.3571 22.7253H40.1201L40.4703 24.3874H43.1827ZM38.7208 16.0756L39.5948 20.3627H37.1449L38.7208 16.0756Z" fill="#172B85"/></svg>',
+  amex:'<svg width="52" height="36" viewBox="0 0 52 36" fill="none"><rect width="52" height="36" rx="2.5" fill="#1F72CD"/><path fill-rule="evenodd" clip-rule="evenodd" d="M9.36996 12.646L4.52197 23.7962H10.3257L11.0452 22.0184H12.6898L13.4093 23.7962H19.7976V22.4393L20.3668 23.7962H23.6713L24.2405 22.4106V23.7962H37.5264L39.1419 22.0645L40.6546 23.7962L47.4785 23.8105L42.6152 18.2522L47.4785 12.646H40.7604L39.1878 14.3456L37.7228 12.646H23.2695L22.0284 15.524L20.7582 12.646H14.9666V13.9567L14.3223 12.646H9.36996ZM29.2097 14.2293H36.8391L39.1725 16.849L41.5812 14.2293H43.9147L40.3692 18.2506L43.9147 22.2256H41.4754L39.1419 19.5755L36.721 22.2256H29.2097V14.2293ZM31.0938 17.3465V15.8859V15.8845H35.8543L37.9315 18.2204L35.7623 20.569H31.0938V18.9745H35.256V17.3465H31.0938ZM10.4929 14.2293H13.3219L16.5376 21.7903V14.2293H19.6366L22.1204 19.6505L24.4094 14.2293H27.493V22.2303H25.6167L25.6014 15.9608L22.8659 22.2303H21.1875L18.4368 15.9608V22.2303H14.5768L13.845 20.4366H9.89152L9.16126 22.2287H7.09314L10.4929 14.2293ZM10.5666 18.7784L11.8691 15.5831L13.1701 18.7784H10.5666Z" fill="white"/></svg>'
 };
 const ic = (n, s = 18, sw = 2) => `<svg class="svg" width="${s}" height="${s}" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="${sw}" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">${P[n]}</svg>`;
 const esc = s => String(s).replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
@@ -814,7 +821,7 @@ function songCard(t, opts = {}) {
   <div class="song">
     <div class="song-ready"><span style="color:var(--green)">${ic('okf',22)}</span><span class="grow">Your track is ready!</span><span class="mp3">${esc(S.fmt[t.id] || 'MP3')}</span></div>
     <div class="song-body">
-      <div class="tile">${ic('note',44,2.6)}</div>
+      <div class="tile">${BRAND.playlist}</div>
       <div class="song-wave" aria-hidden="true">${bars(t.seed + 1, 29).map(h => `<i style="height:${30 + h*.46}px"></i>`).join('')}</div>
       <div style="display:flex;flex-direction:column;align-items:center;gap:6px"><span class="song-name">${esc(t.title)}</span><span class="song-meta"><i>${esc(S.fmt[t.id] || 'MP3')}</i>Version ${t.ver} · ${fmtT(t.dur)}</span></div>
       ${opts.short ? '' : `
@@ -835,7 +842,7 @@ function paywallView() {
       <div class="plans" role="radiogroup" aria-label="Plans">
         ${PLANS.map((p,i) => `
         <div class="plan ${S.plan === i ? 'sel' : ''}">
-          ${p.pop ? `<div class="pop">${ic('rocket',15)}Most popular</div>` : ''}
+          ${p.pop ? `<div class="pop">${BRAND.star}Most popular</div>` : ''}
           <button class="plan-h" style="width:100%;text-align:left" role="radio" aria-checked="${S.plan === i}" data-action="plan" data-v="${i}"><span class="radio"></span><span class="plan-name">${p.name}</span>${price(p)}</button>
           ${S.plan === i ? `<ul class="feats">${FEATS.map(f => { const on = f[1] || p.full; return `<li class="${on ? '' : 'off'} ${f[2] ? 'new' : ''}"><span style="color:var(--green)">${ic(on ? 'okc' : 'xf',26,1.8)}</span>${f[0]}${f[2] ? '<span class="new-tag">NEW</span>' : ''}</li>`; }).join('')}</ul>` : ''}
         </div>`).join('')}
@@ -857,9 +864,9 @@ function checkoutView() {
       <span class="proto-note">Prototype — no payment is taken</span>
       <div class="co-total"><b>Total due today:</b>${price({d:p.d,c:p.c})}</div>
       <b style="font-size:20px">Express checkout</b>
-      <button class="xpay" data-action="pay" data-v="gpay" ${busy ? 'aria-busy="true" disabled' : ''}>${busy === 'gpay' ? 'Processing…' : 'G Pay <span style="opacity:.5">|</span> •••• 8065'}</button>
+      <button class="xpay" data-action="pay" data-v="gpay" ${busy ? 'aria-busy="true" disabled' : ''}>${busy === 'gpay' ? 'Processing…' : `${BRAND.g}<span>Pay</span><span class="gpay-sep" aria-hidden="true"></span><span>•••• 2344</span>`}</button>
       <button class="xpay" data-action="pay" data-v="apple" ${busy ? 'aria-busy="true" disabled' : ''}>${busy === 'apple' ? 'Processing…' : 'Apple Pay'}</button>
-      <button class="xpay xpay-card" data-action="pay" data-v="card" ${busy ? 'aria-busy="true" disabled' : ''}><span>${busy === 'card' ? 'Processing…' : 'Pay with card'}</span><span class="cards" aria-hidden="true"><span class="mc"></span><span class="mc"></span><span class="visa">VISA</span><span class="amex">AMEX</span></span></button>
+      <button class="xpay xpay-card" data-action="pay" data-v="card" ${busy ? 'aria-busy="true" disabled' : ''}><span>${busy === 'card' ? 'Processing…' : 'Pay with card'}</span><span class="cards" aria-hidden="true">${BRAND.mc}${BRAND.maestro}${BRAND.visa}${BRAND.amex}</span></button>
       <hr class="divider" style="background:#ddd">
       <span class="co-plan">${p.name}</span>
       <ul class="co-feats">${feats.map((f,i) => `<li style="font-weight:${i ? 400 : 700}"><span style="color:${i ? '#A58BE8' : 'var(--green)'}">${ic('okc',24,1.6)}</span>${esc(f)}</li>`).join('')}</ul>
