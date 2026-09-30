@@ -59,7 +59,7 @@ p{margin:0}
 .avatar{display:flex;align-items:center;gap:8px}
 .avatar i{width:40px;height:40px;border-radius:50%;background:var(--tint);color:var(--pri);display:grid;place-items:center;font-style:normal;font-weight:800}
 .burger{display:none}
-.steps-top{display:none;align-items:center;gap:16px;font-size:18px;color:var(--grey-t)}
+.hdr .steps-top{display:none;align-items:center;gap:16px;font-size:18px;color:var(--grey-t)}
 .steps-top .st{display:flex;align-items:center;gap:14px;white-space:nowrap}
 .steps-top .st i{width:28px;height:28px;border-radius:50%;display:grid;place-items:center;font-style:normal;font-size:15px;background:#EDEDED;color:var(--grey-t)}
 .steps-top .st.done{color:#4A4A4A} .steps-top .st.done i{background:#2B2B2B;color:#fff}
@@ -69,7 +69,7 @@ p{margin:0}
 body.co-mode .hdr{background:transparent;position:static}
 body.co-mode .hdr-in{max-width:1402px}
 body.co-mode .hdr nav:not(.steps-top),body.co-mode #acct,body.co-mode .burger{display:none}
-body.co-mode .steps-top{display:flex}
+body.co-mode .hdr .steps-top{display:flex}
 .pw-foot{text-align:center;font-size:15px;line-height:24px;color:var(--grey-t)}
 .pw-foot u,.legal u{cursor:pointer}
 
@@ -270,7 +270,10 @@ main{padding:56px 16px 120px}
 .co-total{display:flex;align-items:center;justify-content:space-between;gap:12px}
 .co-total b{font-size:22px}
 .xpay{height:50px;border-radius:8px;background:#000;color:#fff;font-weight:700;font-size:20px;display:flex;align-items:center;justify-content:center;gap:12px;width:100%}
-.xpay.card{background:#555;justify-content:space-between;padding:0 20px}
+.xpay.xpay-card{background:#555;justify-content:space-between;padding:0 20px;gap:12px}
+.xpay-card>span:first-child{white-space:nowrap}
+.xpay-card .cards{flex:none}
+@media (max-width:480px){.xpay.xpay-card{padding:0 14px;font-size:17px}.xpay-card .mc+.mc,.xpay-card .amex{display:none}}
 .xpay:hover{opacity:.88}
 .xpay[aria-busy="true"]{opacity:.6}
 .cards{display:flex;gap:6px;align-items:center}
@@ -367,7 +370,7 @@ body.has-pbar .proto{bottom:calc(160px + env(safe-area-inset-bottom,0px))}
   .song-body{padding-top:32px}
   .co{grid-template-columns:minmax(0,1fr)}
   .co-r{order:-1}
-  .steps-top{gap:10px;font-size:15px}
+  .hdr .steps-top{gap:10px;font-size:15px}
   .steps-top .st{gap:8px}
   .steps-top .st span{display:none}
   .steps-top .st.now span{display:inline}
@@ -402,7 +405,7 @@ body.has-pbar .proto{bottom:calc(160px + env(safe-area-inset-bottom,0px))}
   .cert-lists{grid-template-columns:1fr}
   .kv div{grid-template-columns:110px minmax(0,1fr)}
   .wm{display:none}
-  .steps-top{gap:8px;font-size:14px}
+  .hdr .steps-top{gap:8px;font-size:14px}
   .steps-top .st span{display:none}
   .steps-top .st.now span{display:inline}
   .steps-top hr{width:12px}
@@ -856,7 +859,7 @@ function checkoutView() {
       <b style="font-size:20px">Express checkout</b>
       <button class="xpay" data-action="pay" data-v="gpay" ${busy ? 'aria-busy="true" disabled' : ''}>${busy === 'gpay' ? 'Processing…' : 'G Pay <span style="opacity:.5">|</span> •••• 8065'}</button>
       <button class="xpay" data-action="pay" data-v="apple" ${busy ? 'aria-busy="true" disabled' : ''}>${busy === 'apple' ? 'Processing…' : 'Apple Pay'}</button>
-      <button class="xpay card" data-action="pay" data-v="card" ${busy ? 'aria-busy="true" disabled' : ''}><span>${busy === 'card' ? 'Processing…' : 'Pay with card'}</span><span class="cards" aria-hidden="true"><span class="mc"></span><span class="mc"></span><span class="visa">VISA</span><span class="amex">AMEX</span></span></button>
+      <button class="xpay xpay-card" data-action="pay" data-v="card" ${busy ? 'aria-busy="true" disabled' : ''}><span>${busy === 'card' ? 'Processing…' : 'Pay with card'}</span><span class="cards" aria-hidden="true"><span class="mc"></span><span class="mc"></span><span class="visa">VISA</span><span class="amex">AMEX</span></span></button>
       <hr class="divider" style="background:#ddd">
       <span class="co-plan">${p.name}</span>
       <ul class="co-feats">${feats.map((f,i) => `<li style="font-weight:${i ? 400 : 700}"><span style="color:${i ? '#A58BE8' : 'var(--green)'}">${ic('okc',24,1.6)}</span>${esc(f)}</li>`).join('')}</ul>
@@ -957,7 +960,8 @@ function render() {
   const co = S.view === 'paywall' || S.view === 'checkout';
   document.body.classList.toggle('grey', co);
   document.body.classList.toggle('co-mode', co);
-  if (co) {
+  if (!co) document.getElementById('steps-top').innerHTML = '';
+  else {
     const active = S.view === 'paywall' ? 2 : 3, back = {1:'to-result', 2:'to-paywall'};
     document.getElementById('steps-top').innerHTML = ['Track is ready','Select plan','Payment details','Download'].map((l, i) => {
       const n = i + 1, st = n < active ? 'done' : n === active ? 'now' : '';
