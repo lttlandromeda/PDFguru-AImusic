@@ -290,7 +290,8 @@ main{padding:56px 16px 120px}
 .proto-note{align-self:flex-start;font-size:12px;font-weight:700;color:var(--amber);background:var(--amber-bg);border-radius:999px;padding:4px 12px}
 
 /* modal + drawer */
-.ov{position:fixed;inset:0;background:var(--overlay);z-index:50;display:flex;justify-content:center;align-items:flex-start;padding:max(48px,env(safe-area-inset-top,0px)) 16px 48px;overflow-y:auto;animation:fade .15s}
+.ov{position:fixed;inset:0;background:var(--overlay);z-index:50;display:flex;justify-content:center;align-items:flex-start;padding:max(48px,env(safe-area-inset-top,0px)) 16px 48px;overflow-y:auto}
+.ov.enter{animation:fade .15s}
 @keyframes fade{from{opacity:0}}
 .dlg{background:var(--white);border-radius:20px;box-shadow:var(--shadow-pop);width:100%;max-width:560px;padding:32px;display:flex;flex-direction:column;gap:20px;position:relative}
 .dlg h2{font-size:26px;font-weight:900;line-height:1.2}
@@ -319,7 +320,8 @@ main{padding:56px 16px 120px}
 .pdf-row b{font-size:15px;display:block}
 .pdf-row span{font-size:12px;color:var(--muted)}
 .drawer-ov{justify-content:flex-end;padding:0;align-items:stretch}
-.drawer{background:var(--white);width:100%;max-width:480px;min-height:100%;padding:32px;display:flex;flex-direction:column;gap:20px;box-shadow:var(--shadow-pop);animation:slide .2s ease-out}
+.drawer{background:var(--white);width:100%;max-width:480px;min-height:100%;padding:32px;display:flex;flex-direction:column;gap:20px;box-shadow:var(--shadow-pop)}
+.ov.enter .drawer{animation:slide .2s ease-out}
 @keyframes slide{from{transform:translateX(40px);opacity:.5}}
 .drawer h2{font-size:24px;font-weight:900}
 .kv{display:flex;flex-direction:column}
@@ -902,12 +904,12 @@ function modalHTML() {
   if (S.modal === 'done') return `
   <div class="ov" data-action="ov"><div class="dlg" role="dialog" aria-modal="true" aria-labelledby="done-h">
     <div class="dlg-top"><span class="ok-ic">${ic('check',28,2.6)}</span><button class="x" data-action="close" aria-label="Close">${ic('x',18)}</button></div>
-    <div style="display:flex;flex-direction:column;gap:6px"><h2 id="done-h">Your track is downloading</h2><span class="sub" style="font-size:14px">${esc(t.title)} · Version ${t.ver} · ${S.doneFmt} · ${fmtT(t.dur)}</span><span>${badge(t)}</span></div>
-    <div class="group"><span class="sec-label" id="fmt-l">Need another format?</span>
-      <div class="fmts" role="group" aria-labelledby="fmt-l">${[['MP3','Smaller file · for social and web'],['WAV','Studio quality · for video editing']].map(([k,d]) => `<button class="type" aria-pressed="${S.doneFmt === k}" data-action="done-fmt" data-v="${k}"><b>${k}</b><span>${d}</span></button>`).join('')}</div></div>
+    <div style="display:flex;flex-direction:column;gap:6px"><h2 id="done-h">Your track is ready</h2><span class="sub" style="font-size:14px" id="done-meta">${esc(t.title)} · Version ${t.ver} · ${S.doneFmt} · ${fmtT(t.dur)}</span><span>${badge(t)}</span></div>
+    <div class="group"><span class="sec-label" id="fmt-l">Choose a format</span>
+      <div class="fmts" role="radiogroup" aria-labelledby="fmt-l">${[['MP3','Smaller file · for social and web'],['WAV','Studio quality · for video editing']].map(([k,d]) => `<button class="type" role="radio" aria-checked="${S.doneFmt === k}" aria-pressed="${S.doneFmt === k}" data-action="done-fmt" data-v="${k}"><b>${k}</b><span>${d}</span></button>`).join('')}</div></div>
     <div class="pdf-row"><span class="ic">${ic('file',20)}</span><div class="meta"><b>PDF license certificate</b><span>ID ${t.lic.id} · Worldwide, perpetual</span></div><button class="btn btn-sec btn-sm" data-action="cert" data-id="${t.id}">${ic('file',16)}View PDF</button></div>
     <div class="alert a-info">${ic('info',20)}<div><b>Got a copyright claim on YouTube?</b><p>Share this certificate to dispute it. The license ID shows where the track came from and when it was licensed.</p></div></div>
-    <div class="row"><button class="btn btn-pri btn-md" data-action="close">Done</button><button class="btn btn-ghost btn-sm" data-action="license" data-id="${t.id}">View license details</button></div>
+    <div class="row"><button class="btn btn-pri btn-md" data-action="confirm-download" data-id="${t.id}">${ic('download',20)}Download ${S.doneFmt}</button><button class="btn btn-ghost btn-sm" data-action="license" data-id="${t.id}">View license details</button></div>
   </div></div>`;
   if (S.modal === 'license') {
     const rows = t.lic
@@ -968,11 +970,21 @@ function render() {
   renderModal();
   renderPbar();
 }
+let shownModal = null; // which window is on screen, so updates inside it don't replay the opening animation
 function renderModal() {
   const root = document.getElementById('modal-root'), had = !!root.innerHTML;
+  const key = S.modal ? S.modal + ':' + S.modalTrack : null, fresh = key !== shownModal;
+  // keep focus and scroll position when the same window is redrawn
+  const a = document.activeElement, keepFocus = !fresh && root.contains(a) && a.dataset && a.dataset.action
+    ? `[data-action="${a.dataset.action}"]${a.dataset.v ? `[data-v="${a.dataset.v}"]` : ''}` : null;
+  const oldOv = root.querySelector('.ov'), scroll = oldOv ? oldOv.scrollTop : 0;
   root.innerHTML = S.modal ? modalHTML() : '';
+  shownModal = key;
   document.body.style.overflow = S.modal ? 'hidden' : '';
-  if (S.modal && !had) { lastFocus = document.activeElement; const f = root.querySelector('input, [data-action="close"]'); f && f.focus(); }
+  const ov = root.querySelector('.ov');
+  if (ov) { if (fresh) ov.classList.add('enter'); else ov.scrollTop = scroll; }
+  if (keepFocus) { const f = root.querySelector(keepFocus); f && f.focus(); }
+  if (S.modal && fresh) { if (!had) lastFocus = document.activeElement; const f = root.querySelector('input, [data-action="close"]'); f && f.focus(); }
   if (!S.modal && had && lastFocus && document.contains(lastFocus)) lastFocus.focus();
   const form = document.getElementById('gate-form'); if (form) form.addEventListener('submit', onGate);
 }
@@ -1140,7 +1152,8 @@ document.addEventListener('click', e => {
     case 'license': S.modal = 'license'; S.modalTrack = id; renderModal(); break;
     case 'cert': S.modal = 'cert'; S.modalTrack = id; renderModal(); break;
     case 'close': S.modal = null; renderModal(); if (S.view === 'result') renderPlayState(); break;
-    case 'done-fmt': S.doneFmt = v; S.fmt[S.modalTrack] = v; renderModal(); toast(`${findTrack(S.modalTrack).title}.${v.toLowerCase()} — download is simulated in the prototype`); break;
+    case 'done-fmt': S.doneFmt = v; S.fmt[S.modalTrack] = v; renderModal(); break;
+    case 'confirm-download': { const t = findTrack(id); S.fmt[id] = S.doneFmt; S.modal = null; renderModal(); render(); toast(`Downloading “${t.title}.${S.doneFmt.toLowerCase()}” — simulated in the prototype`); break; }
     case 'plan': S.plan = +v; render(); break;
     case 'continue': S.view = 'checkout'; render(); window.scrollTo(0,0); break;
     case 'to-paywall': S.view = 'paywall'; render(); break;
