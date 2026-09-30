@@ -428,7 +428,9 @@ body.has-pbar .proto{bottom:calc(160px + env(safe-area-inset-bottom,0px))}
   .cert-lists{grid-template-columns:1fr}
   .kv div{grid-template-columns:110px minmax(0,1fr)}
   .wm{display:none}
-  .len .label{flex-direction:column;align-items:flex-start;gap:2px}
+  .len .label,.use .label{flex-direction:column;align-items:flex-start;gap:2px}
+  .use .chips{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:8px}
+  .use .chip{justify-content:center;border-radius:12px;padding:11px 8px;font-size:14px}
   .len-row{flex-direction:column;align-items:stretch;gap:10px}
   .len-presets{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:8px}
   .len-presets .chip{justify-content:center;border-radius:12px;padding:11px 0;font-size:14px}
@@ -764,7 +766,7 @@ function createView() {
       <textarea id="prompt" class="field ${S.blocked || S.emptyErr ? 'err' : ''}" data-input="prompt" placeholder="Describe the music you need — e.g. “upbeat background for a 30-second product Reel”">${esc(f.prompt)}</textarea>
       ${S.emptyErr ? '<span class="field-err" id="empty-err">Describe the music first, or press Shuffle for an idea.</span>' : ''}
       ${blocked}
-      <div class="group">
+      <div class="group use">
         <div class="label"><b id="use-l">What is it for?</b><span>Optional · sets length and style for you</span></div>
         <div class="chips" role="group" aria-labelledby="use-l">${Object.keys(USE).map(u => `<button class="chip" aria-pressed="${f.use === u}" data-action="use" data-v="${esc(u)}">${u}</button>`).join('')}</div>
       </div>
