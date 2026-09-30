@@ -12,10 +12,13 @@ A clickable design prototype of the redesigned AI Music Generator flow. It is a 
 
 ## Run locally
 
-Open `index.html` through any static server, for example:
+The audio file loads only through a server, so start one from this folder. You need Python 3 or Node.js.
 
-```bash
-python -m http.server 8000
-```
+- **Windows:** double-click `start-server.bat`
+- **macOS / Linux / Git Bash:** `./start-server.sh`
 
-Then open http://localhost:8000.
+The script opens http://localhost:8000 in the browser. Press Ctrl+C in its window to stop the server.
+
+Use another port by passing it as an argument, for example `start-server.bat 8080` or `./start-server.sh 8080`. Set `NO_BROWSER=1` to start without opening the browser.
+
+In the Claude desktop app, the `prototype` configuration in `.claude/launch.json` opens it in the built-in browser pane.
