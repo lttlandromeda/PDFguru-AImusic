@@ -234,7 +234,8 @@ main{padding:56px 16px 120px}
 .song-ready{background:var(--mint);border-radius:18px 18px 0 0;padding:22px;display:flex;align-items:center;gap:10px;font-weight:700;font-size:17px}
 .song-ready .grow{flex:1}
 .mp3{background:var(--pink);color:#fff;font-weight:800;font-size:18px;border-radius:8px;padding:4px 10px}
-.song-body{flex:1;display:flex;flex-direction:column;align-items:center;gap:18px;padding:64px 24px 24px;border-radius:0 0 18px 18px;background:radial-gradient(circle at 50% 42%,#F1ECFE 0,#fff 62%)}
+.mp3-m{display:none;position:absolute;left:24px;top:56px;font-size:16px}
+.song-body{position:relative;flex:1;display:flex;flex-direction:column;align-items:center;gap:18px;padding:64px 24px 24px;border-radius:0 0 18px 18px;background:radial-gradient(circle at 50% 42%,#F1ECFE 0,#fff 62%)}
 .tile{width:96px;height:96px;border-radius:22px;background:linear-gradient(135deg,#7A3BE8,#B08AF7);display:grid;place-items:center;color:#fff;box-shadow:0 12px 28px rgba(124,58,237,.28)}
 .song-wave{display:flex;align-items:center;gap:4px;height:76px}
 .song-wave i{width:3.5px;border-radius:2px;background:linear-gradient(#A673F7,#7233E0)}
@@ -388,13 +389,28 @@ body.has-pbar .proto{bottom:calc(160px + env(safe-area-inset-bottom,0px))}
   .actions{flex-wrap:wrap}
   .actions .summary{align-items:flex-start;text-align:left;width:100%;order:3}
   .actions .gen{width:100%;order:4}
-  .pw-top h1{font-size:28px}
-  .btn-cont{width:100%}
-  .plan-h{padding:22px 16px;gap:14px}
-  .plan-name{font-size:19px}
-  .price{font-size:22px}
-  .feats{padding:0 16px 22px 16px}
-  .feats li{font-size:15px}
+  .pw{gap:20px}
+  .pw-top{flex-direction:column}
+  .pw-top h1{font-size:28px;text-align:center;flex:none;width:100%}
+  .btn-cont{position:fixed;left:16px;right:16px;bottom:calc(16px + env(safe-area-inset-bottom,0px));width:auto;max-width:none;height:56px;font-size:18px;z-index:25;box-shadow:0 0 0 16px var(--pg)}
+  body.co-mode main{padding-bottom:120px}
+  body.co-mode .proto-btn{bottom:calc(100px + env(safe-area-inset-bottom,0px))}
+  body.co-mode .proto{bottom:calc(148px + env(safe-area-inset-bottom,0px))}
+  .pw-body{gap:16px}
+  .plans{order:-1;gap:10px}
+  .plan-h,.plan.sel .plan-h{padding:18px 16px;gap:12px}
+  .radio{width:24px;height:24px}
+  .plan.sel .radio::after{width:8px;height:8px}
+  .plan-name,.plan.sel .plan-name{font-size:15px;font-weight:400;text-transform:uppercase}
+  .price{font-size:26px}
+  .price .p-dot,.price .p-per{display:none}
+  .price small{font-size:12px}
+  .pop{font-size:12px;padding:3px}
+  .feats{display:none}
+  .song-ready{justify-content:center;padding:14px;font-size:15px;font-weight:600}
+  .song-ready .grow{flex:none}
+  .song-ready .mp3{display:none}
+  .mp3-m{display:block}
   .co-l{padding:24px 16px}
   .co-feats li{font-size:15px}
   .co-sum{padding:20px;font-size:18px}
@@ -403,12 +419,7 @@ body.has-pbar .proto{bottom:calc(160px + env(safe-area-inset-bottom,0px))}
   .cert-lists{grid-template-columns:1fr}
   .kv div{grid-template-columns:110px minmax(0,1fr)}
   .wm{display:none}
-  .hdr .steps-top{gap:8px;font-size:14px}
-  .steps-top .st span{display:none}
-  .steps-top .st.now span{display:inline}
-  .steps-top hr{width:12px}
-  body.co-mode .hdr-in .sp{display:none}
-  body.co-mode .hdr-in{justify-content:space-between}
+  body.co-mode .hdr .steps-top{display:none}
   .time{min-width:0}
 }
 @media (prefers-reduced-motion:reduce){*{animation:none!important;transition:none!important}}
@@ -823,6 +834,7 @@ function songCard(t, opts = {}) {
   <div class="song">
     <div class="song-ready"><span style="color:var(--green)">${ic('okf',22)}</span><span class="grow">Your track is ready!</span><span class="mp3">${esc(S.fmt[t.id] || 'MP3')}</span></div>
     <div class="song-body">
+      <span class="mp3 mp3-m" aria-hidden="true">${esc(S.fmt[t.id] || 'MP3')}</span>
       <div class="tile">${BRAND.playlist}</div>
       <div class="song-wave" aria-hidden="true">${bars(t.seed + 1, 29).map(h => `<i style="height:${30 + h*.46}px"></i>`).join('')}</div>
       <div style="display:flex;flex-direction:column;align-items:center;gap:6px"><span class="song-name">${esc(t.title)}</span><span class="song-meta"><i>${esc(S.fmt[t.id] || 'MP3')}</i>Version ${t.ver} · ${fmtT(t.dur)}</span></div>
@@ -833,7 +845,7 @@ function songCard(t, opts = {}) {
     </div>
   </div>`;
 }
-const price = p => `<span class="price">$${p.d}.<sup>${p.c}</sup>${p.per ? '<small>/per month</small>' : ''}</span>`;
+const price = p => `<span class="price">$${p.d}<span class="p-dot">.</span><sup>${p.c}</sup>${p.per ? '<small><span class="p-per">/per </span>month</small>' : ''}</span>`;
 function paywallView() {
   const t = findTrack(S.pending) || S.tracks[0];
   return `
