@@ -778,7 +778,7 @@ function createView() {
         ${left}
         <span class="grow"></span>
         <div class="summary"><b id="sum">${esc(sumLine)}</b><span class="${limit ? 'out' : ''}">${counter}</span></div>
-        <button class="btn btn-pri btn-md gen" data-action="generate" ${limit || S.blocked ? 'disabled' : ''}>${ic(S.edit ? 'refresh' : 'sparkles',18)}${cta}</button>
+        <button class="btn btn-pri btn-md gen" data-action="generate" ${canGenerate() ? '' : 'disabled'} title="${hasInput(f) ? '' : 'Describe the music or choose what it is for'}">${ic(S.edit ? 'refresh' : 'sparkles',18)}${cta}</button>
       </div>
     </section>
     ${extra}
@@ -1130,12 +1130,26 @@ function finishGen(req) {
   S.edit = false; S.baseline = null; S.view = 'result';
   render(); window.scrollTo(0, 0);
 }
+const hasInput = f => !!(f.prompt.trim() || f.use);
+function canGenerate() {
+  return hasInput(S.form) && !S.blocked && !(S.gensLeft <= 0 && !hasPlan());
+}
+// a short request built from the chosen options, used when the field is left empty
+function promptFromOptions(f) {
+  const s = `${f.mood ? f.mood + ' ' : ''}${f.type.toLowerCase()} for ${f.use}`;
+  return s.charAt(0).toUpperCase() + s.slice(1);
+}
+function updateGenerateButton() {
+  const g = document.querySelector('[data-action="generate"]'); if (!g) return;
+  g.disabled = !canGenerate();
+  g.title = hasInput(S.form) ? '' : 'Describe the music or choose what it is for';
+}
 function doGenerate() {
   const f = S.form;
-  if (!f.prompt.trim()) { S.emptyErr = true; render(); document.getElementById('prompt').focus(); return; }
+  if (!hasInput(f)) { S.emptyErr = true; render(); document.getElementById('prompt').focus(); return; }
   if (BLOCK.test(f.prompt)) { S.blocked = true; render(); document.getElementById('blocked').scrollIntoView({block:'center', behavior:'smooth'}); return; }
   if (S.gensLeft <= 0 && !hasPlan()) return;
-  startGen({...f});
+  startGen({...f, prompt: f.prompt.trim() || promptFromOptions(f)});
 }
 function startDownload(id) {
   const t = findTrack(id); if (!t) return;
@@ -1252,7 +1266,8 @@ document.addEventListener('input', e => {
   const k = e.target.dataset.input; if (!k) return;
   if (k === 'prompt') {
     S.form.prompt = e.target.value;
-    if (S.blocked || S.emptyErr) { S.blocked = false; S.emptyErr = false; e.target.classList.remove('err'); const b = document.getElementById('blocked'); b && b.remove(); const m = document.getElementById('empty-err'); m && m.remove(); const g = document.querySelector('[data-action="generate"]'); if (g && !(S.gensLeft <= 0 && !hasPlan())) g.disabled = false; }
+    if (S.blocked || S.emptyErr) { S.blocked = false; S.emptyErr = false; e.target.classList.remove('err'); const b = document.getElementById('blocked'); b && b.remove(); const m = document.getElementById('empty-err'); m && m.remove(); }
+    updateGenerateButton();
     if (S.edit) { const s = document.getElementById('sum'); const c = changes(S.form, S.baseline); s.textContent = `${c.length ? c.length + (c.length === 1 ? ' change' : ' changes') + ' · ' : ''}Makes 2 new versions · uses 1 generation`; }
   }
   if (k === 'lyrics') S.form.lyrics = e.target.value;
