@@ -267,6 +267,8 @@ main{padding:56px 16px 120px}
 .plan.sel .radio::after{content:"";width:12px;height:12px;border-radius:50%;background:#fff}
 .plan-name{font-size:28px;flex:1;min-width:0}
 .plan.sel .plan-name{font-weight:800}
+.plan-left{font-weight:400}
+.plan-h:disabled{opacity:.45;cursor:not-allowed}
 .price{font-weight:800;font-size:30px;white-space:nowrap;color:var(--dark)}
 .price sup{font-size:17px;vertical-align:14px}
 .price small{font-size:13px;color:var(--grey-t);font-weight:400}
@@ -414,6 +416,7 @@ body.has-pbar .proto{bottom:calc(160px + env(safe-area-inset-bottom,0px))}
   .plan-name,.plan.sel .plan-name{font-size:15px;font-weight:400;text-transform:uppercase}
   .price{font-size:26px}
   .price .p-dot,.price .p-per{display:none}
+  .plan-left{display:block;font-size:12px;text-transform:none;color:var(--muted);margin-top:2px}
   .price small{font-size:12px}
   .pop{font-size:12px;padding:3px}
   .feats{display:none}
@@ -590,10 +593,17 @@ const TITLES = {
   _:['Soft Glow','Morning Ritual','Warm Signal','City Lights']
 };
 const PLANS = [
+  {name:'One-Time Purchase', d:'0', c:'49', total:'$0.49', once:true},
   {name:'7-Day Limited Access', d:'0', c:'99', total:'$0.99', full:false},
   {name:'7-Day Full Access', d:'1', c:'99', total:'$1.99', full:true, pop:true},
   {name:'Annual Plan', d:'24', c:'95', total:'$24.95', full:true, per:true}
 ];
+// a one-time purchase licenses only the track being bought; it is not a subscription
+const ONCE_FEATS = [['Commercial license + PDF certificate for every download',true,true],['Create original tracks from a prompt',true],['11 music genres',true],['AI-written lyrics you can edit',true],['50+ document, media, and AI tools',false],['Unlimited music generations',false],['Early access to new tools',false],['Faster processing (up to 2x)',false],['Multi-user access',false]];
+const featsFor = p => p.once ? ONCE_FEATS : FEATS.map(f => [f[0], f[1] || p.full, f[2]]);
+const popularPlan = () => PLANS.find(p => p.pop).name;
+const defaultPlan = () => S.onceLeft > 0 ? 0 : 1;
+const timesLeft = n => n > 0 ? `(${n} ${n === 1 ? 'time' : 'times'} left)` : '(none left)';
 const FEATS = [['Commercial license + PDF certificate for every download',true,true],['Unlimited music generations',true],['Create original tracks from a prompt',true],['11 music genres',true],['AI-written lyrics you can edit',true],['50+ document, media, and AI tools',true],['Early access to new tools',false],['Faster processing (up to 2x)',false],['Multi-user access',false]];
 const CAN = ['YouTube, TikTok, Instagram Reels and podcasts','Ads, websites and client projects','Presentations, games and apps'];
 const CANT = ['Selling it as music on Spotify, Apple Music or other stores','Registering it in YouTube Content ID'];
@@ -603,7 +613,7 @@ const blankForm = () => ({prompt:'', use:null, dur:30, type:'Track', mood:null, 
 const S = {
   view:'create', form:blankForm(), more:false, blocked:false, emptyErr:false,
   edit:false, baseline:null,
-  gensLeft:3, simErr:false,
+  gensLeft:3, simErr:false, onceLeft:3,
   gen:null, tracks:[], earlier:[], trackCount:0,
   user:null, plan:0, pending:null, paying:null,
   modal:null, modalTrack:null, stack:[], doneFmt:'MP3',
@@ -890,8 +900,8 @@ function paywallView() {
         ${PLANS.map((p,i) => `
         <div class="plan ${S.plan === i ? 'sel' : ''}">
           ${p.pop ? `<div class="pop">${BRAND.star}Most popular</div>` : ''}
-          <button class="plan-h" style="width:100%;text-align:left" role="radio" aria-checked="${S.plan === i}" data-action="plan" data-v="${i}"><span class="radio"></span><span class="plan-name">${p.name}</span>${price(p)}</button>
-          ${S.plan === i ? `<ul class="feats">${FEATS.map(f => { const on = f[1] || p.full; return `<li class="${on ? '' : 'off'} ${f[2] ? 'new' : ''}"><span style="color:var(--green)">${ic(on ? 'okc' : 'xf',26,1.8)}</span>${f[0]}${f[2] ? '<span class="new-tag">NEW</span>' : ''}</li>`; }).join('')}</ul>` : ''}
+          <button class="plan-h" style="width:100%;text-align:left" role="radio" aria-checked="${S.plan === i}" data-action="plan" data-v="${i}" ${p.once && S.onceLeft <= 0 ? 'disabled' : ''}><span class="radio"></span><span class="plan-name">${p.name}${p.once ? ` <span class="plan-left">${timesLeft(S.onceLeft)}</span>` : ''}</span>${price(p)}</button>
+          ${S.plan === i ? `<ul class="feats">${featsFor(p).map(f => { const on = f[1]; return `<li class="${on ? '' : 'off'} ${f[2] ? 'new' : ''}"><span style="color:var(--green)">${ic(on ? 'okc' : 'xf',26,1.8)}</span>${f[0]}${f[2] ? '<span class="new-tag">NEW</span>' : ''}</li>`; }).join('')}</ul>` : ''}
         </div>`).join('')}
       </div>
     </div>
@@ -900,9 +910,11 @@ function paywallView() {
 }
 function checkoutView() {
   const t = findTrack(S.pending) || S.tracks[0], p = PLANS[S.plan];
-  const feats = [`Commercial license + PDF certificate for “${t.title}”`, ...FEATS.slice(1).filter(f => f[1] || p.full).map(f => f[0])];
+  const feats = [`Commercial license + PDF certificate for “${t.title}”`, ...featsFor(p).slice(1).filter(f => f[1]).map(f => f[0])];
   const busy = S.paying;
-  const legal = p.per
+  const legal = p.once
+    ? `By continuing, you agree to our <u>Terms and Conditions</u> and <u>Privacy Policy</u>. This is a one-time payment of ${p.total} for “${esc(t.title)}”. Nothing renews and you won’t be charged again. <u>Refund Policy</u>. Your music license stays valid permanently.`
+    : p.per
     ? `By continuing, you agree to our <u>Terms and Conditions</u> and <u>Privacy Policy</u>. The Annual Plan is billed at $24.95 per month until you cancel in settings. <u>Subscription Policy</u> and <u>Refund Policy</u>. Your music license stays valid after you cancel.`
     : `By continuing, you agree that, as described in our <u>Terms and Conditions</u> and <u>Privacy Policy</u>, if you don’t cancel at least 24 hours prior to the end of the 7-day trial, you will automatically be charged $49.99 (tax incl.) every month until you cancel in settings. <u>Subscription Policy</u> and <u>Refund Policy</u>. Your music license stays valid after you cancel.`;
   return `
@@ -1156,10 +1168,10 @@ function startDownload(id) {
   S.pending = id; Player.stop();
   if (hasPlan()) { grantLicense(t); return; }
   if (!S.user) { S.modal = 'gate'; S.modalTrack = id; S.gateErr = ''; renderModal(); return; }
-  S.modal = null; S.view = 'paywall'; render(); window.scrollTo(0, 0);
+  S.modal = null; S.view = 'paywall'; S.plan = defaultPlan(); render(); window.scrollTo(0, 0);
 }
-function grantLicense(t) {
-  if (!t.lic) t.lic = { id: `PG-M-${rid()}-${rid()}`, issued: today(), issuedLong: todayLong(), plan: S.user.plan, email: S.user.email };
+function grantLicense(t, planName = S.user.plan) {
+  if (!t.lic) t.lic = { id: `PG-M-${rid()}-${rid()}`, issued: today(), issuedLong: todayLong(), plan: planName, email: S.user.email };
   S.doneFmt = S.fmt[t.id] || 'MP3';
   S.view = 'result'; S.modal = 'done'; S.modalTrack = t.id; S.pending = null;
   render();
@@ -1168,7 +1180,7 @@ function onGate(e) {
   e.preventDefault();
   const v = document.getElementById('email').value.trim(); S.gateEmail = v;
   if (!/^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/.test(v)) { S.gateErr = v ? 'That email doesn’t look right. Check for typos, e.g. name@company.com' : 'Enter your email to create an account'; renderModal(); document.getElementById('email').focus(); return; }
-  S.user = { email: v, plan: null }; S.modal = null; S.view = 'paywall'; S.plan = 0;
+  S.user = { email: v, plan: null }; S.modal = null; S.view = 'paywall'; S.plan = defaultPlan();
   render(); window.scrollTo(0, 0);
 }
 function openEdit() {
@@ -1204,10 +1216,10 @@ function jump(v) {
     case 'result': sample(); S.view = 'result'; break;
     case 'edit': sample(); openEdit(); S.form.dur = 15; render(); return;
     case 'gate': sample(); S.user = null; document.getElementById('p-sub').checked = false; S.view = 'result'; S.modal = 'gate'; S.modalTrack = S.tracks[0].id; S.pending = S.tracks[0].id; break;
-    case 'paywall': sample(); S.user = S.user || {email:'you@company.com', plan:null}; S.user.plan = null; S.pending = S.tracks[0].id; S.view = 'paywall'; break;
-    case 'checkout': sample(); S.user = S.user || {email:'you@company.com', plan:null}; S.user.plan = null; S.pending = S.tracks[0].id; S.view = 'checkout'; break;
+    case 'paywall': sample(); S.user = S.user || {email:'you@company.com', plan:null}; S.user.plan = null; S.pending = S.tracks[0].id; S.view = 'paywall'; S.plan = defaultPlan(); break;
+    case 'checkout': sample(); S.user = S.user || {email:'you@company.com', plan:null}; S.user.plan = null; S.pending = S.tracks[0].id; S.view = 'checkout'; S.plan = defaultPlan(); break;
     case 'done': case 'license': case 'cert': {
-      sample(); S.user = S.user || {email:'you@company.com', plan:null}; if (!S.user.plan) S.user.plan = PLANS[1].name;
+      sample(); S.user = S.user || {email:'you@company.com', plan:null}; if (!S.user.plan) S.user.plan = popularPlan();
       const t = S.tracks[0]; if (!t.lic) t.lic = { id: `PG-M-${rid()}-${rid()}`, issued: today(), issuedLong: todayLong(), plan: S.user.plan, email: S.user.email };
       S.view = 'result'; S.modal = v; S.modalTrack = t.id; S.doneFmt = 'MP3'; if (v === 'cert') S.stack = [{m:'done', t:t.id}]; document.getElementById('p-sub').checked = true; break; }
   }
@@ -1237,7 +1249,7 @@ document.addEventListener('click', e => {
     case 'write-lyrics': f.lyrics = `${f.prompt ? f.prompt.split(',')[0] : 'Here we go'}, feel it now\nEvery little moment, we’ll show you how\nLight it up and let it shine\nThis is the time, this is the time`; render(); break;
     case 'shuffle': { let n; do { n = SHUFFLE[Math.floor(Math.random() * SHUFFLE.length)]; } while (n === f.prompt && SHUFFLE.length > 1); f.prompt = n; S.blocked = false; S.emptyErr = false; render(); break; }
     case 'suggest': f.prompt = 'Bright acoustic pop with handclaps, happy and summery, for my shop ad'; S.blocked = false; render(); break;
-    case 'see-plans': sample(); S.pending = S.tracks[0].id; if (!S.user) { S.modal = 'gate'; S.modalTrack = S.pending; renderModal(); } else { S.view = 'paywall'; render(); window.scrollTo(0,0); } break;
+    case 'see-plans': sample(); S.pending = S.tracks[0].id; if (!S.user) { S.modal = 'gate'; S.modalTrack = S.pending; renderModal(); } else { S.view = 'paywall'; S.plan = defaultPlan(); render(); window.scrollTo(0,0); } break;
     case 'generate': doGenerate(); break;
     case 'cancel-gen': clearInterval(genTimer); S.view = S.edit ? 'create' : 'create'; S.form = {...S.gen.req}; render(); toast('Cancelled. This didn’t use a generation.'); break;
     case 'retry': startGen(S.gen.req); break;
@@ -1256,7 +1268,9 @@ document.addEventListener('click', e => {
     case 'plan': S.plan = +v; render(); break;
     case 'continue': S.view = 'checkout'; render(); window.scrollTo(0,0); break;
     case 'to-paywall': S.view = 'paywall'; render(); break;
-    case 'pay': S.paying = v; render(); setTimeout(() => { S.paying = null; S.user.plan = PLANS[S.plan].name; document.getElementById('p-sub').checked = true; grantLicense(findTrack(S.pending) || S.tracks[0]); window.scrollTo(0,0); }, 1200); break;
+    case 'pay': S.paying = v; render(); setTimeout(() => { S.paying = null; const pl = PLANS[S.plan], tr = findTrack(S.pending) || S.tracks[0];
+      if (pl.once) { S.onceLeft = Math.max(0, S.onceLeft - 1); grantLicense(tr, 'One-time purchase'); }
+      else { S.user.plan = pl.name; document.getElementById('p-sub').checked = true; grantLicense(tr); } window.scrollTo(0,0); }, 1200); break;
     case 'proto': { const p = document.getElementById('proto'); p.hidden = !p.hidden; el.setAttribute('aria-expanded', String(!p.hidden)); break; }
     case 'reset-gens': S.gensLeft = 3; if (S.view === 'create') render(); toast('Free generations reset to 3'); break;
     case 'reset-all': location.reload(); break;
@@ -1277,7 +1291,7 @@ document.addEventListener('change', e => {
   if (e.target.id === 'jump' && e.target.value) { jump(e.target.value); e.target.value = ''; }
   if (e.target.id === 'p-err') { S.simErr = e.target.checked; toast(S.simErr ? 'The next generation will fail at about 55%' : 'Generations will succeed'); }
   if (e.target.id === 'p-sub') {
-    if (e.target.checked) { S.user = S.user || {email:'you@company.com', plan:null}; S.user.plan = S.user.plan || PLANS[1].name; }
+    if (e.target.checked) { S.user = S.user || {email:'you@company.com', plan:null}; S.user.plan = S.user.plan || popularPlan(); }
     else if (S.user) S.user.plan = null;
     render();
   }
