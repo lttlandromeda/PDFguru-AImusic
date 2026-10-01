@@ -110,7 +110,7 @@ main{padding:56px 16px 120px}
 .field::placeholder{color:var(--faint)}
 .field:focus{border-color:var(--vio);box-shadow:0 0 0 1px var(--vio)}
 .field.err{border-color:var(--red);box-shadow:0 0 0 1px var(--red)}
-.prompt-tools{display:flex;align-items:center;gap:8px;margin-top:-8px}
+.prompt-tools{display:flex;align-items:center;gap:12px}
 .label{display:flex;align-items:baseline;justify-content:space-between;gap:12px;flex-wrap:wrap}
 .label b{font-size:13px}
 .label span{font-size:12px;color:var(--faint)}
@@ -750,9 +750,8 @@ function createView() {
 
   const cta = S.edit ? 'Regenerate with changes' : 'Generate music';
   const sumLine = S.edit ? `${chg.length ? chg.length + (chg.length === 1 ? ' change' : ' changes') + ' · ' : ''}Makes 2 new versions · uses 1 generation` : summary(f);
-  const left = S.edit
-    ? `<button class="btn btn-ghost btn-sm" data-action="to-result">Keep current versions</button>`
-    : `<button class="btn btn-ghost btn-sm" data-action="more" aria-expanded="${S.more}" aria-controls="more-panel">${S.more ? 'Hide options' : 'More options'}${ic(S.more ? 'up' : 'down',16)}</button>`;
+  const left = S.edit ? `<button class="btn btn-ghost btn-sm" data-action="to-result">Keep current versions</button>` : '';
+  const moreBtn = `<button class="btn btn-ghost btn-sm" data-action="more" aria-expanded="${S.more}" aria-controls="more-panel">${S.more ? 'Hide options' : 'More options'}${ic(S.more ? 'up' : 'down',16)}</button>`;
 
   const extra = S.edit ? `
     <div class="col" style="gap:10px"><span class="sec-label">Current versions</span>${S.tracks.map(t => miniRow(t)).join('')}</div>` : `
@@ -766,7 +765,7 @@ function createView() {
     <section class="card ${S.edit ? 'focus' : ''}" aria-label="Describe your track">
       <label for="prompt" hidden>Describe the music you need</label>
       <textarea id="prompt" class="field ${S.blocked || S.emptyErr ? 'err' : ''}" data-input="prompt" placeholder="Describe the music you need — e.g. “upbeat background for a 30-second product Reel”">${esc(f.prompt)}</textarea>
-      ${S.edit ? '' : `<div class="prompt-tools"><button class="btn btn-tint btn-sm" data-action="shuffle">${ic('shuffle',16)}Shuffle</button></div>`}
+      <div class="prompt-tools">${S.edit ? '' : `<button class="btn btn-tint btn-sm" data-action="shuffle">${ic('shuffle',16)}Shuffle</button>`}${moreBtn}</div>
       ${S.emptyErr ? '<span class="field-err" id="empty-err">Describe the music first, or press Shuffle for an idea.</span>' : ''}
       ${blocked}
       <div class="group use">
